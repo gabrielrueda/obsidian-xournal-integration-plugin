@@ -35,7 +35,7 @@ export class CreateDrawing extends Modal {
           }));
   }
 
-  createXournalFile(result: string){
+  private createXournalFile(result: string){
     const filePath = (this.app.vault.adapter as any).basePath + "/_xournal/" + result + ".xopp"
 
     if(this.app.vault.getAbstractFileByPath("_xournal/" + result + ".xopp")){

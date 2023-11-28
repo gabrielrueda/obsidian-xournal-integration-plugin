@@ -3,13 +3,19 @@ import { CreateDrawing } from "Modals/create_drawing_modal";
 import { EditDrawing } from "Modals/edit_drawing_modal";
 import { CreatePdfDrawing } from "Modals/create_pdf_drawing_modal";
 import { Plugin } from "obsidian";
+import { XournalIntegrationSettings, XournalIntegrationSettingsTab } from "settings";
 
 
 
-export default class CycleThroughPanes extends Plugin {
+export default class XournalIntegrationPlugin extends Plugin {
+  settings: XournalIntegrationSettings;
 
-  onload() {
+  async onload() {
     console.log('loading plugin: Cycle through panes');
+    
+    this.settings = Object.assign(new XournalIntegrationSettings(), await this.loadData());
+    this.addSettingTab(new XournalIntegrationSettingsTab(this.app, this));
+    
     this.addCommand({
       id: "edit-drawing",
       name: "Edit Drawing",
