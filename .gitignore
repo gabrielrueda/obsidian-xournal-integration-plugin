@@ -23,3 +23,9 @@ data.json
 
 .env
 package-lock.json
+
+# My Changes
+.editorconfig
+.eslintignore
+.eslintrc
+.npmrc
