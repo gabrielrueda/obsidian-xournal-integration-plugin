@@ -1,13 +1,15 @@
-import { App, Modal, Setting } from "obsidian";
-
-const { exec } = require('child_process');
+import { App, Modal, Setting, TFile } from "obsidian";
 
 export class CreateDrawing extends Modal {
   result: string;
+  folder: string;
+  templateFile: string;
   onSubmit: (result: string) => void;
 
-  constructor(app: App) {
+  constructor(app: App, folder: string, templateFile: string) {
     super(app);
+    this.folder = folder;
+    this.templateFile = templateFile;
   }
 
   onOpen() {
@@ -36,35 +38,28 @@ export class CreateDrawing extends Modal {
   }
 
   private createXournalFile(result: string){
-    const filePath = (this.app.vault.adapter as any).basePath + "/_xournal/" + result + ".xopp"
+    const newFilePath = this.folder + "/" + result + ".xopp"
+    
 
-    if(this.app.vault.getAbstractFileByPath("_xournal/" + result + ".xopp")){
+    if(this.app.vault.getAbstractFileByPath(newFilePath)){
       return false;
     }
 
-    const templatePath = (this.app.vault.adapter as any).basePath + "/_xournal/template.xopp" 
+    const templateTFile = this.app.vault.getAbstractFileByPath(this.templateFile)
 
-    const command = "cp " + templatePath + " " + filePath
+    if(templateTFile instanceof TFile){
+      this.app.vault.copy(templateTFile, newFilePath)
+    }else{
+      return false
+    }
 
     const currFile = this.app.workspace.getActiveFile()
 
     if(currFile != null && currFile.extension == "md"){
-      this.app.vault.append(currFile, "![[_xournal/" + result + ".pdf]]")
-    }
+      this.app.vault.append(currFile, "![[" + this.folder + "/" + result + ".pdf]]")
+    }      
     
-    exec(command, (err, output) => {
-        // once the command has completed, the callback function is called
-        if (err) {
-            // log and return if we encounter an error
-            console.error("could not execute command: ", err)
-            return false;
-        }
-        // log the output received from the command
-        console.log("Output: \n", output)
-        });
-      
-      
-        return true;
+    return true;
     
     }
 

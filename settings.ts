@@ -6,6 +6,7 @@ declare class XournalIntegrationPlugin extends Plugin {
 
 export class XournalIntegrationSettings {
     xopp_location: string = "_xournal";
+    template_location: string = "_xournal/template.xopp"
 }
 
 export class XournalIntegrationSettingsTab extends PluginSettingTab {
@@ -25,10 +26,25 @@ export class XournalIntegrationSettingsTab extends PluginSettingTab {
             .setName("New Xournal File Folder")
             .setDesc("Location to store all xournal files and their pdf output")
             .addText((text) =>
-                text.onChange((value) => {
-                this.plugin.settings.xopp_location = value;
-                this.plugin.saveData(this.plugin.settings);
+                text
+                .setValue(this.plugin.settings.xopp_location)
+                .onChange((value) => {
+                    this.plugin.settings.xopp_location = value;
+                    this.plugin.saveData(this.plugin.settings);
+            }));
+     
+            
+        new Setting(containerEl)
+            .setName("Xournal Template File")
+            .setDesc("File for xournal template to use in new drawings")
+            .addText((text) =>
+                text
+                .setValue(this.plugin.settings.template_location)
+                .onChange((value) => {
+                    this.plugin.settings.template_location = value;
+                    this.plugin.saveData(this.plugin.settings);
             }));
             
+
     }
 }

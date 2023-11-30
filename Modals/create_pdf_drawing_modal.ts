@@ -2,9 +2,6 @@ import { App, FuzzySuggestModal, Modal, Notice, TFile, loadPdfJs } from "obsidia
 
 import * as fs from 'fs';
 
-const { exec } = require('child_process');
-
-
 
 export class CreatePdfDrawing extends FuzzySuggestModal<TFile> {
     getItems(): TFile[] {
@@ -52,28 +49,32 @@ export class CreatePdfDrawing extends FuzzySuggestModal<TFile> {
     console.log(info)
 
 
-    const newfilePath = basePath + "/_xournal/" + file.basename + ".xopp"
+    // const newfilePath = basePath + "/_xournal/" + file.basename + ".xopp"
+    const newfilePath = "_xournal/" + file.basename + ".xopp"
 
-    var writeStream = fs.createWriteStream(newfilePath);
-    writeStream.write("<?xml version=\"1.0\" standalone=\"no\"?>\n");
-    writeStream.write("<xournal version=\"0.4\">\n\n");
+    let fileContent = []
+
+    // Header
+    fileContent.push("<?xml version=\"1.0\" standalone=\"no\"?>\n");
+    fileContent.push("<xournal version=\"0.4\">\n\n");
 
     // First Page:
-    writeStream.write("<page width=\"" + String(info[0]) + "\" height=\"" + String(info[1]) + "\">\n")
-    writeStream.write("<background type=\"pdf\" domain=\"absolute\" filename=\"" + filePath + "\" pageno=\"1ll\"/>\n")
-    writeStream.write("<layer/>\n")
-    writeStream.write("</page>\n\n")
+    fileContent.push("<page width=\"" + String(info[0]) + "\" height=\"" + String(info[1]) + "\">\n")
+    fileContent.push("<background type=\"pdf\" domain=\"absolute\" filename=\"" + filePath + "\" pageno=\"1ll\"/>\n")
+    fileContent.push("<layer/>\n")
+    fileContent.push("</page>\n\n")
 
     // Remaing pages
     for(var i = 2; i <= info[2]; i++){
-      writeStream.write("<page width=\"" + String(info[0]) + "\" height=\"" + String(info[1]) + "\">\n")
-      writeStream.write("<background type=\"pdf\" pageno=\"" + i + "ll\"/>\n")
-      writeStream.write("<layer/>\n")
-      writeStream.write("</page>\n\n")
+      fileContent.push("<page width=\"" + String(info[0]) + "\" height=\"" + String(info[1]) + "\">\n")
+      fileContent.push("<background type=\"pdf\" pageno=\"" + i + "ll\"/>\n")
+      fileContent.push("<layer/>\n")
+      fileContent.push("</page>\n\n")
     }
 
-    writeStream.write("</xournal>")
-    writeStream.end();
+    fileContent.push("</xournal>")
+
+    this.app.vault.create(newfilePath, fileContent.join(""))
 
     const currFile = this.app.workspace.getActiveFile()
 

@@ -11,7 +11,7 @@ export default class XournalIntegrationPlugin extends Plugin {
   settings: XournalIntegrationSettings;
 
   async onload() {
-    console.log('loading plugin: Cycle through panes');
+    console.log('loading plugin: Xournal Integration Plugin');
     
     this.settings = Object.assign(new XournalIntegrationSettings(), await this.loadData());
     this.addSettingTab(new XournalIntegrationSettingsTab(this.app, this));
@@ -28,7 +28,7 @@ export default class XournalIntegrationPlugin extends Plugin {
       id: "create-new-drawing",
       name: "Create New Drawing",
       callback: () => {
-        new CreateDrawing(this.app).open();
+        new CreateDrawing(this.app, this.settings.xopp_location, this.settings.template_location).open();
       }
     })
 
@@ -42,6 +42,6 @@ export default class XournalIntegrationPlugin extends Plugin {
   }
 
   onunload() {
-    console.log('unloading plugin: Cycle through panes');
+    console.log('unloading plugin: Xournal Integration Plugin');
   }
 }
