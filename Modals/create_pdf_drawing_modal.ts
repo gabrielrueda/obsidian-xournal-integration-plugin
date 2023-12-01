@@ -72,6 +72,7 @@ export class CreatePdfDrawing extends FuzzySuggestModal<TFile> {
 
     fileContent.push("</xournal>")
 
+    // TODO: Don't create a file in the vault, if it already exists
     this.app.vault.create(newfilePath, fileContent.join(""))
 
     const currFile = this.app.workspace.getActiveFile()

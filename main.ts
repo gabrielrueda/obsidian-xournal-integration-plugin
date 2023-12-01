@@ -2,6 +2,7 @@
 import { CreateDrawing } from "Modals/create_drawing_modal";
 import { EditDrawing } from "Modals/edit_drawing_modal";
 import { CreatePdfDrawing } from "Modals/create_pdf_drawing_modal";
+import { DeleteDrawing } from "Modals/delete_drawing_modal";
 import { Plugin } from "obsidian";
 import { XournalIntegrationSettings, XournalIntegrationSettingsTab } from "settings";
 
@@ -25,6 +26,14 @@ export default class XournalIntegrationPlugin extends Plugin {
     })
 
     this.addCommand({
+      id: "delete-drawing",
+      name: "Delete Drawing",
+      callback: () => {
+        new DeleteDrawing(this.app).open();
+      }
+    })
+
+    this.addCommand({
       id: "create-new-drawing",
       name: "Create New Drawing",
       callback: () => {
@@ -39,6 +48,8 @@ export default class XournalIntegrationPlugin extends Plugin {
         new CreatePdfDrawing(this.app, this.settings.xopp_location).open();
       }
     })
+
+    
   }
 
   onunload() {
