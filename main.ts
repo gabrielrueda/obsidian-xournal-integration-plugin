@@ -36,7 +36,7 @@ export default class XournalIntegrationPlugin extends Plugin {
       id: "create-new-drawing-from-pdf",
       name: "Create New Drawing From PDF",
       callback: () => {
-        new CreatePdfDrawing(this.app).open();
+        new CreatePdfDrawing(this.app, this.settings.xopp_location).open();
       }
     })
   }
