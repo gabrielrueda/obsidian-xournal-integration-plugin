@@ -22,7 +22,7 @@ export class DeleteDrawing extends FuzzySuggestModal<TFile> {
 
 
   async onChooseItem(file: TFile, evt: MouseEvent | KeyboardEvent) {
-    const pdfFile = this.app.vault.getAbstractFileByPath(file.path.slice(0, -5) + ".pdf")
+    const pdfFile = this.app.vault.getAbstractFileByPath(file.path.slice(0, -4) + "pdf")
 
     if(pdfFile != null){
       this.app.vault.delete(pdfFile)

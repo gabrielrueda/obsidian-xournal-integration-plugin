@@ -19,7 +19,7 @@ export default class XournalIntegrationPlugin extends Plugin {
     
     this.addCommand({
       id: "edit-drawing",
-      name: "Edit Drawing",
+      name: "Edit drawing",
       callback: () => {
         new EditDrawing(this.app).open();
       }
@@ -27,7 +27,7 @@ export default class XournalIntegrationPlugin extends Plugin {
 
     this.addCommand({
       id: "delete-drawing",
-      name: "Delete Drawing",
+      name: "Delete drawing",
       callback: () => {
         new DeleteDrawing(this.app).open();
       }
@@ -35,7 +35,7 @@ export default class XournalIntegrationPlugin extends Plugin {
 
     this.addCommand({
       id: "create-new-drawing",
-      name: "Create New Drawing",
+      name: "Create new drawing from template",
       callback: () => {
         new CreateDrawing(this.app, this.settings.xopp_location, this.settings.template_location).open();
       }
@@ -43,7 +43,7 @@ export default class XournalIntegrationPlugin extends Plugin {
 
     this.addCommand({
       id: "create-new-drawing-from-pdf",
-      name: "Create New Drawing From PDF",
+      name: "Create new drawing from pdf",
       callback: () => {
         new CreatePdfDrawing(this.app, this.settings.xopp_location).open();
       }

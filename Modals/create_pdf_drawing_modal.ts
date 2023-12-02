@@ -1,4 +1,4 @@
-import { App, FuzzySuggestModal, Modal, Notice, TFile, loadPdfJs } from "obsidian";
+import { App, FuzzySuggestModal, Modal, Notice, TFile, loadPdfJs, normalizePath } from "obsidian";
 
 export class CreatePdfDrawing extends FuzzySuggestModal<TFile> {
   folder: string;
@@ -27,11 +27,10 @@ export class CreatePdfDrawing extends FuzzySuggestModal<TFile> {
 
       let res = [0, 0, doc.numPages]
 
-      await doc.getPage(2).then(page => {
-        res[0] = page.view[2] - page.view[0]
-        res[1] = page.view[3] - page.view[1]
-      });
-
+      let page = await doc.getPage(2)
+      res[0] = page.view[2] - page.view[0]
+      res[1] = page.view[3] - page.view[1]
+      
       return res
         
     }
@@ -42,13 +41,13 @@ export class CreatePdfDrawing extends FuzzySuggestModal<TFile> {
     
   async onChooseItem(file: TFile, evt: MouseEvent | KeyboardEvent) {
     const basePath = (this.app.vault.adapter as any).basePath;
-    const filePath = basePath + "/" + file.path;
+    const filePath = normalizePath(basePath + "/" + file.path);
 
     const doc = await this.app.vault.readBinary(file)
     
     const info = await this.getPdfInfo(Buffer.from(doc))
 
-    const newfilePath = this.folder + "/" + file.basename + ".xopp"
+    const newfilePath = normalizePath(this.folder + "/" + file.basename + ".xopp")
 
     let fileContent = []
 
@@ -63,7 +62,7 @@ export class CreatePdfDrawing extends FuzzySuggestModal<TFile> {
     fileContent.push("</page>\n\n")
 
     // Remaing pages
-    for(var i = 2; i <= info[2]; i++){
+    for(let i = 2; i <= info[2]; i++){
       fileContent.push("<page width=\"" + String(info[0]) + "\" height=\"" + String(info[1]) + "\">\n")
       fileContent.push("<background type=\"pdf\" pageno=\"" + i + "ll\"/>\n")
       fileContent.push("<layer/>\n")
@@ -77,8 +76,10 @@ export class CreatePdfDrawing extends FuzzySuggestModal<TFile> {
 
     const currFile = this.app.workspace.getActiveFile()
 
+    // const editor = this.app.workspace.activeEditor;
     if(currFile != null && currFile.extension == "md"){
-      this.app.vault.append(currFile, "![[" + this.folder + "/" + file.basename + ".pdf]]")
+      // TODO: Don't append and instead user Editor class in obsidian
+      this.app.vault.append(currFile, "![[" + normalizePath(this.folder + "/" + file.basename + ".pdf") + "]]")
     }
     
 

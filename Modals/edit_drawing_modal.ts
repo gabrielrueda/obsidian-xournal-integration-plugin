@@ -1,4 +1,4 @@
-import { App, FuzzySuggestModal, Modal, Notice, TFile } from "obsidian";
+import { App, FuzzySuggestModal, Modal, Notice, TFile, normalizePath } from "obsidian";
 
 const { exec } = require('child_process');
 
@@ -24,11 +24,9 @@ export class EditDrawing extends FuzzySuggestModal<TFile> {
 
 
   async onChooseItem(file: TFile, evt: MouseEvent | KeyboardEvent) {
-		// pdfjs.GlobalWorkerOptions.workerSrc = worker;
-
     const basePath = (this.app.vault.adapter as any).basePath
 
-    const filePath = "\"" + basePath + "/" + file.path + "\"";
+    const filePath = normalizePath("\"" + basePath + "/" + file.path + "\"");
 
     const pdfFilePath = filePath.slice(0, -5) + "pdf" + "\""; 
 
