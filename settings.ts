@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, normalizePath } from 'obsidian';
+import {App, normalizePath, Plugin, PluginSettingTab, Setting} from 'obsidian';
 
 declare class XournalIntegrationPlugin extends Plugin {
     settings: XournalIntegrationSettings;
