@@ -1,4 +1,4 @@
-import {FuzzySuggestModal, normalizePath, TFile} from "obsidian";
+import {FuzzySuggestModal, normalizePath, Notice, TFile} from "obsidian";
 
 const {exec} = require('child_process');
 
@@ -28,15 +28,19 @@ export class EditDrawing extends FuzzySuggestModal<TFile> {
 
         const command = "xournalpp " + filePath + "; xournalpp -p " + pdfFilePath + " " + filePath;
 
-        exec(command, (err, output) => {
+        exec(command, (err: string) => {
             // once the command has completed, the callback function is called
             if (err) {
-                // log and return if we encounter an error
-                console.error("could not execute command: ", err)
-                return
+                // Fix if xournalpp command can't be found, opens file in default application for .xopp
+                exec(`xdg-open ${filePath}`, (openErr: string)  => {
+                    if(openErr) {
+                        // log and return if we encounter an error
+                        console.error("could not execute command: ", err)
+                        new Notice(`Error: could not execute command ${command}`)
+                        return
+                    }
+                })
             }
-            // log the output received from the command
-            console.log("Output: \n", output)
         })
 
     }

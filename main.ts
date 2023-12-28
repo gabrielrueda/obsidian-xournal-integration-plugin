@@ -13,7 +13,7 @@ export default class XournalIntegrationPlugin extends Plugin {
 
 
     async onload() {
-        console.log('loading plugin: Xournal Integration Plugin');
+        console.log('Loading plugin: Xournal Integration Plugin');
 
         this.settings = Object.assign(new XournalIntegrationSettings(), await this.loadData());
         this.addSettingTab(new XournalIntegrationSettingsTab(this.app, this));
