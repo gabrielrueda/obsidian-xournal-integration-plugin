@@ -1,23 +1,22 @@
 import {App, loadPdfJs, normalizePath, Notice, TFile} from "obsidian";
+import {XournalIntegrationSettings} from "../settings";
 
 export class CreateDrawingService {
-    outputFolder: string
-    templateFile: string
     app: App
+    settings: XournalIntegrationSettings
 
-    constructor(app: App, folder: string, templateFile: string) {
-        this.outputFolder = folder;
+    constructor(app: App, settings: XournalIntegrationSettings) {
         this.app = app
-        this.templateFile = templateFile
+        this.settings = settings
     }
 
-    createEmpty(name: string, outputFolder: string = this.outputFolder) {
+    createEmpty(name: string, outputFolder: string = this.settings.xopp_location) {
         let fileContent = []
 
         // Header
         fileContent.push("<?xml version=\"1.0\" standalone=\"no\"?>\n");
-        fileContent.push("<xournal creator=\"obsidianplugin\" fileversion=\"0.4\">\n\n");
-        fileContent.push(`<title>${name}</title>`)
+        fileContent.push("<xournal creator=\"obsidianplugin\" fileversion=\"0.4\">\n");
+        fileContent.push(`<title>${name}</title>\n\n`)
 
         // Page:
         fileContent.push("<page width=\"595.27559100\" height=\"841.88976400\">\n")
@@ -25,10 +24,15 @@ export class CreateDrawingService {
         fileContent.push("<layer/>\n")
         fileContent.push("</page>\n\n")
 
-        fileContent.push("</xournal>")
+        fileContent.push("</xournal>\n")
 
         const newFilePath = normalizePath(`${outputFolder}/${name}.xopp`)
-        if(!this.app.vault.getAbstractFileByPath(newFilePath)) {
+        const newFile = this.app.vault.getAbstractFileByPath(newFilePath)
+        if(!newFile || this.settings.overwrite_files) {
+            if(newFile && this.settings.overwrite_files) {
+                this.app.vault.delete(newFile)
+                new Notice(`The file ${newFilePath} was overridden`)
+            }
             this.app.vault.create(newFilePath, fileContent.join(""))
         } else {
             new Notice(`The file ${newFilePath} already exists`)
@@ -46,19 +50,19 @@ export class CreateDrawingService {
         }
     }
 
-    createFromTemplate(name: string, outputFolder: string = this.outputFolder){
+    createFromTemplate(name: string, outputFolder: string = this.settings.xopp_location){
         const newFilePath = outputFolder + "/" + name + ".xopp"
 
         if(this.app.vault.getAbstractFileByPath(newFilePath)){
             throw Error(`File ${newFilePath} already exists`)
         }
 
-        const templateTFile = this.app.vault.getAbstractFileByPath(this.templateFile)
+        const templateTFile = this.app.vault.getAbstractFileByPath(this.settings.template_location)
 
         if(templateTFile instanceof TFile){
             this.app.vault.copy(templateTFile, newFilePath)
         } else {
-            throw Error(`Couldn't create new file '${newFilePath}: Template file '${this.templateFile}' does not exist`)
+            throw Error(`Couldn't create new file '${newFilePath}: Template file '${this.settings.template_location}' does not exist`)
         }
 
         const currFile = this.app.workspace.getActiveFile()
@@ -72,7 +76,7 @@ export class CreateDrawingService {
         }
     }
 
-    async createFromPdf(file: TFile, outputFolder: string = this.outputFolder) {
+    async createFromPdf(file: TFile, outputFolder: string = this.settings.xopp_location) {
         const basePath = (this.app.vault.adapter as any).basePath;
         const filePath = "/" + normalizePath(basePath + "/" + file.path);
 
@@ -104,7 +108,11 @@ export class CreateDrawingService {
 
         fileContent.push("</xournal>")
 
-        if(!this.app.vault.getAbstractFileByPath(newFilePath)) {
+        const newFile = this.app.vault.getAbstractFileByPath(newFilePath)
+        if(!newFile || this.settings.overwrite_files) {
+            if(newFile && this.settings.overwrite_files) {
+                this.app.vault.delete(newFile)
+            }
             this.app.vault.create(newFilePath, fileContent.join(""))
         } else {
             new Notice(`The file ${newFilePath} already exists`)

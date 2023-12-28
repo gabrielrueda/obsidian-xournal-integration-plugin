@@ -17,7 +17,7 @@ export default class XournalIntegrationPlugin extends Plugin {
 
         this.settings = Object.assign(new XournalIntegrationSettings(), await this.loadData());
         this.addSettingTab(new XournalIntegrationSettingsTab(this.app, this));
-        this.createDrawingService = new CreateDrawingService(this.app, this.settings.xopp_location, this.settings.template_location)
+        this.createDrawingService = new CreateDrawingService(this.app, this.settings)
 
         this.addCommand({
             id: "edit-drawing",

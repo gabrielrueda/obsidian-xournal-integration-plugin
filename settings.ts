@@ -7,6 +7,7 @@ declare class XournalIntegrationPlugin extends Plugin {
 export class XournalIntegrationSettings {
     xopp_location: string = "_xournal";
     template_location: string = "_xournal/template.xopp"
+    overwrite_files: boolean = false
 }
 
 export class XournalIntegrationSettingsTab extends PluginSettingTab {
@@ -19,7 +20,6 @@ export class XournalIntegrationSettingsTab extends PluginSettingTab {
 
     display(): void {
         let { containerEl } = this;
-
         containerEl.empty();
 
         new Setting(containerEl)
@@ -32,8 +32,7 @@ export class XournalIntegrationSettingsTab extends PluginSettingTab {
                     this.plugin.settings.xopp_location = value;
                     this.plugin.saveData(this.plugin.settings);
             }));
-     
-            
+
         new Setting(containerEl)
             .setName("Xournal template file")
             .setDesc("File for xournal template to use in new drawings")
@@ -45,7 +44,17 @@ export class XournalIntegrationSettingsTab extends PluginSettingTab {
                     this.plugin.settings.template_location = value;
                     this.plugin.saveData(this.plugin.settings);
             }));
-            
 
+        new Setting(containerEl)
+            .setName("Overwrite existing files")
+            .setDesc("Whether you want to automatically overwrite files if you create a second one with the same name")
+            .addToggle((toggle) =>
+                toggle
+                    .setValue(this.plugin.settings.overwrite_files)
+                    .onChange((value) => {
+                        this.plugin.settings.overwrite_files = value;
+                        this.plugin.saveData(this.plugin.settings);
+                    })
+            )
     }
 }
