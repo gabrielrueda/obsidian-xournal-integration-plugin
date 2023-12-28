@@ -9,10 +9,7 @@ export class EditDrawing extends FuzzySuggestModal<TFile> {
 
         return files.filter(
             (element, index, array) => {
-                if (element.extension == "xopp") {
-                    return true;
-                }
-                return false;
+                return element.extension == "xopp";
             }
         )
     }

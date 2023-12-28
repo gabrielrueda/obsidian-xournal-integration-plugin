@@ -27,12 +27,22 @@ export class CreateDrawingService {
 
         fileContent.push("</xournal>")
 
-        const newfilePath = normalizePath(`${outputFolder}/${name}.xopp`)
-        if(!this.app.vault.getAbstractFileByPath(newfilePath)) {
-            this.app.vault.create(newfilePath, fileContent.join(""))
+        const newFilePath = normalizePath(`${outputFolder}/${name}.xopp`)
+        if(!this.app.vault.getAbstractFileByPath(newFilePath)) {
+            this.app.vault.create(newFilePath, fileContent.join(""))
         } else {
-            new Notice(`The file ${newfilePath} already exists`)
+            new Notice(`The file ${newFilePath} already exists`)
             return
+        }
+
+        const currFile = this.app.workspace.getActiveFile()
+        const editor = this.app.workspace.activeEditor?.editor;
+
+        if(currFile != null && currFile.extension == "md"){
+            editor?.replaceRange(
+                `![[${newFilePath}]]`,
+                editor?.getCursor()
+            )
         }
     }
 
@@ -52,9 +62,13 @@ export class CreateDrawingService {
         }
 
         const currFile = this.app.workspace.getActiveFile()
+        const editor = this.app.workspace.activeEditor?.editor;
 
         if(currFile != null && currFile.extension == "md"){
-            this.app.vault.append(currFile, "![[" + outputFolder + "/" + name + ".pdf]]")
+            editor?.replaceRange(
+                `![[${newFilePath}]]`,
+                editor?.getCursor()
+            )
         }
     }
 
@@ -66,7 +80,7 @@ export class CreateDrawingService {
 
         const info = await this.getPdfInfo(Buffer.from(doc))
 
-        const newfilePath = normalizePath(outputFolder + "/" + file.basename + ".xopp")
+        const newFilePath = normalizePath(outputFolder + "/" + file.basename + ".xopp")
 
         let fileContent = []
 
@@ -90,19 +104,21 @@ export class CreateDrawingService {
 
         fileContent.push("</xournal>")
 
-        if(!this.app.vault.getAbstractFileByPath(newfilePath)) {
-            this.app.vault.create(newfilePath, fileContent.join(""))
+        if(!this.app.vault.getAbstractFileByPath(newFilePath)) {
+            this.app.vault.create(newFilePath, fileContent.join(""))
         } else {
-            new Notice(`The file ${newfilePath} already exists`)
+            new Notice(`The file ${newFilePath} already exists`)
             return
         }
 
         const currFile = this.app.workspace.getActiveFile()
+        const editor = this.app.workspace.activeEditor?.editor;
 
-        // const editor = this.app.workspace.activeEditor;
         if(currFile != null && currFile.extension == "md"){
-            // TODO: Don't append and instead user Editor class in obsidian
-            this.app.vault.append(currFile, "![[" + normalizePath(this.outputFolder + "/" + file.basename + ".pdf") + "]]")
+            editor?.replaceRange(
+                `![[${newFilePath}]]`,
+                editor?.getCursor()
+            )
         }
     }
 
