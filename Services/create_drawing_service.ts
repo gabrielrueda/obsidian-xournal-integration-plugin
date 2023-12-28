@@ -33,6 +33,7 @@ export class CreateDrawingService {
                 this.app.vault.delete(newFile)
                 new Notice(`The file ${newFilePath} was overridden`)
             }
+            this.createParentFolders(newFilePath)
             this.app.vault.create(newFilePath, fileContent.join(""))
         } else {
             new Notice(`The file ${newFilePath} already exists`)
@@ -60,6 +61,7 @@ export class CreateDrawingService {
         const templateTFile = this.app.vault.getAbstractFileByPath(this.settings.template_location)
 
         if(templateTFile instanceof TFile){
+            this.createParentFolders(newFilePath)
             this.app.vault.copy(templateTFile, newFilePath)
         } else {
             throw Error(`Couldn't create new file '${newFilePath}: Template file '${this.settings.template_location}' does not exist`)
@@ -113,6 +115,7 @@ export class CreateDrawingService {
             if(newFile && this.settings.overwrite_files) {
                 this.app.vault.delete(newFile)
             }
+            this.createParentFolders(newFilePath)
             this.app.vault.create(newFilePath, fileContent.join(""))
         } else {
             new Notice(`The file ${newFilePath} already exists`)
@@ -141,5 +144,15 @@ export class CreateDrawingService {
         res[1] = page.view[3] - page.view[1]
 
         return res
+    }
+
+    createParentFolders(file: string) {
+        if(this.app.vault.getAbstractFileByPath(file) || !file.contains("/")) {
+            return
+        }
+
+        const newFile = file.substring(0, file.lastIndexOf("/"))
+        this.createParentFolders(newFile)
+        this.app.vault.createFolder(newFile)
     }
 }
