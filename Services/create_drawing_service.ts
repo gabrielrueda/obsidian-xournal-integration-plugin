@@ -1,5 +1,6 @@
-import {App, loadPdfJs, normalizePath, Notice, TFile} from "obsidian";
+import {App, loadPdfJs, moment, normalizePath, Notice, TFile} from "obsidian";
 import {XournalIntegrationSettings} from "../settings";
+import {gzip, ungzip} from "node-gzip"
 
 export class CreateDrawingService {
     app: App
@@ -10,7 +11,7 @@ export class CreateDrawingService {
         this.settings = settings
     }
 
-    createEmpty(name: string, outputFolder: string = this.settings.xopp_location) {
+    async createEmpty(name: string, outputFolder: string = this.settings.xopp_location) {
         let fileContent = []
 
         // Header
@@ -34,7 +35,9 @@ export class CreateDrawingService {
                 new Notice(`The file ${newFilePath} was overridden`)
             }
             this.createParentFolders(newFilePath)
-            this.app.vault.create(newFilePath, fileContent.join(""))
+
+            const compressed = await gzip(fileContent.join())
+            this.app.vault.createBinary(newFilePath, compressed)
         } else {
             new Notice(`The file ${newFilePath} already exists`)
             return
@@ -51,7 +54,7 @@ export class CreateDrawingService {
         }
     }
 
-    createFromTemplate(name: string, outputFolder: string = this.settings.xopp_location){
+    async createFromTemplate(name: string, outputFolder: string = this.settings.xopp_location){
         const newFilePath = outputFolder + "/" + name + ".xopp"
 
         if(this.app.vault.getAbstractFileByPath(newFilePath)){
@@ -62,7 +65,14 @@ export class CreateDrawingService {
 
         if(templateTFile instanceof TFile){
             this.createParentFolders(newFilePath)
-            this.app.vault.copy(templateTFile, newFilePath)
+
+            let fileContent = (await ungzip(await this.app.vault.readBinary(templateTFile))).toString()
+            fileContent = fileContent
+                .replace("${title}", name)
+                .replace("${date}", moment().format(this.settings.date_format))
+            const compressed = await gzip(fileContent)
+
+            await this.app.vault.createBinary(newFilePath, compressed)
         } else {
             throw Error(`Couldn't create new file '${newFilePath}: Template file '${this.settings.template_location}' does not exist`)
         }
@@ -116,7 +126,9 @@ export class CreateDrawingService {
                 this.app.vault.delete(newFile)
             }
             this.createParentFolders(newFilePath)
-            this.app.vault.create(newFilePath, fileContent.join(""))
+
+            const compressed = await gzip(fileContent.join(""))
+            this.app.vault.createBinary(newFilePath, compressed)
         } else {
             new Notice(`The file ${newFilePath} already exists`)
             return

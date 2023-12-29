@@ -8,6 +8,7 @@ export class XournalIntegrationSettings {
     xopp_location: string = "_xournal";
     template_location: string = "_xournal/template.xopp"
     overwrite_files: boolean = false
+    date_format: string = "DD.MM.YYYY"
 }
 
 export class XournalIntegrationSettingsTab extends PluginSettingTab {
@@ -36,6 +37,7 @@ export class XournalIntegrationSettingsTab extends PluginSettingTab {
         new Setting(containerEl)
             .setName("Xournal template file")
             .setDesc("File for xournal template to use in new drawings")
+            .setTooltip("You can use ${title} and ${date} as variables in your template")
             .addText((text) =>
                 text
                 .setValue(this.plugin.settings.template_location)
@@ -56,5 +58,16 @@ export class XournalIntegrationSettingsTab extends PluginSettingTab {
                         this.plugin.saveData(this.plugin.settings);
                     })
             )
+
+        new Setting(containerEl)
+            .setName("Custom Date Format")
+            .setDesc("The date format which will be used to replace ${date} variables")
+            .addText((text) =>
+                text
+                    .setValue(this.plugin.settings.date_format)
+                    .onChange((value) => {
+                        this.plugin.settings.date_format = value;
+                        this.plugin.saveData(this.plugin.settings);
+                    }));
     }
 }
