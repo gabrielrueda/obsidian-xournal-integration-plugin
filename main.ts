@@ -103,7 +103,7 @@ export default class XournalIntegrationPlugin extends Plugin {
         );
         this.registerEvent(
             this.app.workspace.on("file-menu", (menu, file) => {
-                if (!(file instanceof TFolder)) {
+                if (!(file instanceof TFolder) && file.path != this.settings.template_location) {
                     return
                 }
                 menu.addItem((item) => {
@@ -112,7 +112,7 @@ export default class XournalIntegrationPlugin extends Plugin {
                         .setIcon("document")
                         .onClick(async () => {
                             new SelectNameModal(this.app, "Create Xournal drawing from Template", (name => {
-                                this.createDrawingService.createFromTemplate(name, file.path)
+                                this.createDrawingService.createFromTemplate(name, file instanceof TFolder ? file.path : undefined)
                             })).open();
                         });
                 });
