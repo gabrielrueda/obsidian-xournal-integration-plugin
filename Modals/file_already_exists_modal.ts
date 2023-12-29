@@ -39,7 +39,6 @@ export class FileAlreadyExistsModal extends Modal {
     }
 
     submit(result: "overwrite" | "cancel" | "newName") {
-        console.log(result)
         this.onSubmit(result, this.file)
         this.close()
     }

@@ -1,4 +1,4 @@
-import {App, loadPdfJs, moment, normalizePath, TFile} from "obsidian";
+import {App, loadPdfJs, moment, normalizePath, Notice, TFile} from "obsidian";
 import {gzip, ungzip} from "node-gzip"
 import {FileAlreadyExistsModal} from "../Modals/file_already_exists_modal";
 import {SelectNameModal} from "../Modals/select_name_modal";
@@ -44,8 +44,6 @@ export class CreateDrawingService {
         const templateTFile = this.app.vault.getAbstractFileByPath(this.plugin.settings.template_location)
 
         if(templateTFile instanceof TFile){
-            this.createParentFolders(newFilePath)
-
             let fileContent = (await ungzip(await this.app.vault.readBinary(templateTFile))).toString()
             fileContent = fileContent
                 .replace("${title}", name)
@@ -95,6 +93,7 @@ export class CreateDrawingService {
 
     private async createXoppFile(filePath: string, content: string) {
         const newFile = this.app.vault.getAbstractFileByPath(filePath)
+
         if(!newFile || this.plugin.settings.overwrite_files) {
             await this.createFile(filePath, content)
         } else {
@@ -128,7 +127,7 @@ export class CreateDrawingService {
         if(newFile) {
             await this.app.vault.delete(newFile)
         }
-        this.createParentFolders(file)
+        this.createFolders(file.substring(0, file.lastIndexOf("/")))
 
         const compressed = await gzip(content)
         await this.app.vault.createBinary(file, compressed)
@@ -147,13 +146,18 @@ export class CreateDrawingService {
         return res
     }
 
-    createParentFolders(file: string) {
-        if(this.app.vault.getAbstractFileByPath(file) || !file.contains("/")) {
+    createFolders(folder: string) {
+        if(this.app.vault.getAbstractFileByPath(folder)) {
+            return
+        }
+        if(!folder.contains("/")) {
+            this.app.vault.createFolder(folder)
             return
         }
 
-        const newFile = file.substring(0, file.lastIndexOf("/"))
-        this.createParentFolders(newFile)
-        this.app.vault.createFolder(newFile)
+        const parent = folder.substring(0, folder.lastIndexOf("/"))
+
+        this.createFolders(parent)
+        this.app.vault.createFolder(folder)
     }
 }
