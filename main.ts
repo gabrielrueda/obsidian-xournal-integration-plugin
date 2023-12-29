@@ -1,4 +1,4 @@
-import {CreateDrawing} from "Modals/select_name_modal";
+import {SelectNameModal} from "Modals/select_name_modal";
 import {EditDrawing} from "Modals/edit_drawing_modal";
 import {CreatePdfDrawing} from "Modals/create_pdf_drawing_modal";
 import {DeleteDrawing} from "Modals/delete_drawing_modal";
@@ -17,7 +17,7 @@ export default class XournalIntegrationPlugin extends Plugin {
 
         this.settings = Object.assign(new XournalIntegrationSettings(), await this.loadData());
         this.addSettingTab(new XournalIntegrationSettingsTab(this.app, this));
-        this.createDrawingService = new CreateDrawingService(this.app, this.settings)
+        this.createDrawingService = new CreateDrawingService(this.app, this)
 
         this.addCommand({
             id: "edit-drawing",
@@ -39,7 +39,7 @@ export default class XournalIntegrationPlugin extends Plugin {
             id: "create-empty-drawing",
             name: "Create empty drawing",
             callback: () => {
-                new CreateDrawing(this.app, "Create Xournal drawing", (name => {
+                new SelectNameModal(this.app, "Create Xournal drawing", (name => {
                     this.createDrawingService.createEmpty(name)
                 })).open();
             }
@@ -49,7 +49,7 @@ export default class XournalIntegrationPlugin extends Plugin {
             id: "create-drawing-from-template",
             name: "Create drawing from template",
             callback: () => {
-                new CreateDrawing(this.app, "Create Xournal drawing from template", (name => {
+                new SelectNameModal(this.app, "Create Xournal drawing from template", (name => {
                     this.createDrawingService.createFromTemplate(name)
                 })).open();
             }
@@ -94,7 +94,7 @@ export default class XournalIntegrationPlugin extends Plugin {
                         .setTitle("Create Xournal drawing")
                         .setIcon("document")
                         .onClick(async () => {
-                            new CreateDrawing(this.app, "Create Xournal drawing", (name => {
+                            new SelectNameModal(this.app, "Create Xournal drawing", (name => {
                                 this.createDrawingService.createEmpty(name, file.path)
                             })).open();
                         });
@@ -111,7 +111,7 @@ export default class XournalIntegrationPlugin extends Plugin {
                         .setTitle("Create Xournal drawing from template")
                         .setIcon("document")
                         .onClick(async () => {
-                            new CreateDrawing(this.app, "Create Xournal drawing from Template", (name => {
+                            new SelectNameModal(this.app, "Create Xournal drawing from Template", (name => {
                                 this.createDrawingService.createFromTemplate(name, file.path)
                             })).open();
                         });

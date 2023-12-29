@@ -1,26 +1,46 @@
-import {App, Modal, TAbstractFile} from "obsidian";
+import {App, Modal, Setting} from "obsidian";
 
 export class FileAlreadyExistsModal extends Modal {
-    fileName: string
+    private readonly file: string
+    private readonly onSubmit: (result: "overwrite" | "cancel" | "newName", file: string) => void
 
-    constructor(app: App, fileName: string) {
+    constructor(app: App, file: string, onSubmit: (result: "overwrite" | "cancel" | "newName", file: string) => void) {
         super(app);
-        this.fileName = fileName
-
-        this.titleEl.innerHTML = `A file called "${fileName.split("/").last()}" already exists`
-        this.contentEl.innerHTML =
-            '<div class="modal-button-container">' +
-            '<label class="mod-checkbox"><input tabindex="-1" type="checkbox">Don\'t ask again</label>' +
-            '<button class="mod-warning" onclick="this.overwrite()">Overwrite</button>' +
-            '<button class="mod-submit" onclick="this.newName()">Enter new Name</button>' +
-            '<button onclick="this.cancel()">Cancel</button>' +
-            '</div>'
+        this.file = file
+        this.onSubmit = onSubmit
     }
 
-    overwrite() {
-        const file = this.app.vault.getAbstractFileByPath(this.fileName)
-        if (file instanceof TAbstractFile) {
-            this.app.vault.delete(file)
-        }
+    onOpen() {
+        const {contentEl} = this;
+
+        contentEl.createEl("h1", {text: `A file called "${this.file.split("/").last()}" already exists`});
+
+        new Setting(contentEl)
+            .addButton((btn) =>
+                btn
+                    .setButtonText("Overwrite")
+                    .setWarning()
+                    .onClick(() => {
+                        this.submit("overwrite")
+                    }))
+            .addButton((btn) =>
+                btn
+                    .setButtonText("New Name")
+                    .setCta()
+                    .onClick(() => {
+                        this.submit("newName")
+                    }))
+            .addButton((btn) =>
+                btn
+                    .setButtonText("Cancel")
+                    .onClick(() => {
+                        this.submit("cancel")
+                    }));
+    }
+
+    submit(result: "overwrite" | "cancel" | "newName") {
+        console.log(result)
+        this.onSubmit(result, this.file)
+        this.close()
     }
 }

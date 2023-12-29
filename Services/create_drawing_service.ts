@@ -1,17 +1,19 @@
-import {App, loadPdfJs, moment, normalizePath, Notice, TFile} from "obsidian";
-import {XournalIntegrationSettings} from "../settings";
+import {App, loadPdfJs, moment, normalizePath, TFile} from "obsidian";
 import {gzip, ungzip} from "node-gzip"
+import {FileAlreadyExistsModal} from "../Modals/file_already_exists_modal";
+import {SelectNameModal} from "../Modals/select_name_modal";
+import XournalIntegrationPlugin from "../main";
 
 export class CreateDrawingService {
     app: App
-    settings: XournalIntegrationSettings
+    plugin: XournalIntegrationPlugin
 
-    constructor(app: App, settings: XournalIntegrationSettings) {
+    constructor(app: App, plugin: XournalIntegrationPlugin) {
         this.app = app
-        this.settings = settings
+        this.plugin = plugin
     }
 
-    async createEmpty(name: string, outputFolder: string = this.settings.xopp_location) {
+    async createEmpty(name: string, outputFolder: string = this.plugin.settings.xopp_location) {
         let fileContent = []
 
         // Header
@@ -28,40 +30,18 @@ export class CreateDrawingService {
         fileContent.push("</xournal>\n")
 
         const newFilePath = normalizePath(`${outputFolder}/${name}.xopp`)
-        const newFile = this.app.vault.getAbstractFileByPath(newFilePath)
-        if(!newFile || this.settings.overwrite_files) {
-            if(newFile && this.settings.overwrite_files) {
-                this.app.vault.delete(newFile)
-                new Notice(`The file ${newFilePath} was overridden`)
-            }
-            this.createParentFolders(newFilePath)
 
-            const compressed = await gzip(fileContent.join())
-            this.app.vault.createBinary(newFilePath, compressed)
-        } else {
-            new Notice(`The file ${newFilePath} already exists`)
-            return
-        }
-
-        const currFile = this.app.workspace.getActiveFile()
-        const editor = this.app.workspace.activeEditor?.editor;
-
-        if(currFile != null && currFile.extension == "md"){
-            editor?.replaceRange(
-                `![[${newFilePath}]]`,
-                editor?.getCursor()
-            )
-        }
+        await this.createXoppFile(newFilePath, fileContent.join(""))
     }
 
-    async createFromTemplate(name: string, outputFolder: string = this.settings.xopp_location){
+    async createFromTemplate(name: string, outputFolder: string = this.plugin.settings.xopp_location){
         const newFilePath = outputFolder + "/" + name + ".xopp"
 
         if(this.app.vault.getAbstractFileByPath(newFilePath)){
             throw Error(`File ${newFilePath} already exists`)
         }
 
-        const templateTFile = this.app.vault.getAbstractFileByPath(this.settings.template_location)
+        const templateTFile = this.app.vault.getAbstractFileByPath(this.plugin.settings.template_location)
 
         if(templateTFile instanceof TFile){
             this.createParentFolders(newFilePath)
@@ -69,26 +49,16 @@ export class CreateDrawingService {
             let fileContent = (await ungzip(await this.app.vault.readBinary(templateTFile))).toString()
             fileContent = fileContent
                 .replace("${title}", name)
-                .replace("${date}", moment().format(this.settings.date_format))
-            const compressed = await gzip(fileContent)
+                .replace("${date}", moment().format(this.plugin.settings.date_format))
 
-            await this.app.vault.createBinary(newFilePath, compressed)
+            await this.createXoppFile(newFilePath, fileContent)
         } else {
-            throw Error(`Couldn't create new file '${newFilePath}: Template file '${this.settings.template_location}' does not exist`)
+            throw Error(`Couldn't create new file '${newFilePath}: Template file '${this.plugin.settings.template_location}' does not exist`)
         }
 
-        const currFile = this.app.workspace.getActiveFile()
-        const editor = this.app.workspace.activeEditor?.editor;
-
-        if(currFile != null && currFile.extension == "md"){
-            editor?.replaceRange(
-                `![[${newFilePath}]]`,
-                editor?.getCursor()
-            )
-        }
     }
 
-    async createFromPdf(file: TFile, outputFolder: string = this.settings.xopp_location) {
+    async createFromPdf(file: TFile, outputFolder: string = this.plugin.settings.xopp_location) {
         const basePath = (this.app.vault.adapter as any).basePath;
         const filePath = "/" + normalizePath(basePath + "/" + file.path);
 
@@ -120,18 +90,26 @@ export class CreateDrawingService {
 
         fileContent.push("</xournal>")
 
-        const newFile = this.app.vault.getAbstractFileByPath(newFilePath)
-        if(!newFile || this.settings.overwrite_files) {
-            if(newFile && this.settings.overwrite_files) {
-                this.app.vault.delete(newFile)
-            }
-            this.createParentFolders(newFilePath)
+        await this.createXoppFile(newFilePath, fileContent.join(""))
+    }
 
-            const compressed = await gzip(fileContent.join(""))
-            this.app.vault.createBinary(newFilePath, compressed)
+    private async createXoppFile(filePath: string, content: string) {
+        const newFile = this.app.vault.getAbstractFileByPath(filePath)
+        if(!newFile || this.plugin.settings.overwrite_files) {
+            await this.createFile(filePath, content)
         } else {
-            new Notice(`The file ${newFilePath} already exists`)
-            return
+            new FileAlreadyExistsModal(this.app, filePath, (result) => {
+                if(result === "overwrite") {
+                    this.createFile(filePath, content)
+                } else if(result === "newName") {
+                    new SelectNameModal(this.app, `New name for file ${filePath}`, (result) => {
+                        const newFilePath = normalizePath(filePath.substring(0, filePath.lastIndexOf("/")) + "/" + result + ".xopp")
+                        this.createXoppFile(newFilePath, content)
+                    }).open()
+                } else {
+                    return
+                }
+            }).open()
         }
 
         const currFile = this.app.workspace.getActiveFile()
@@ -139,10 +117,21 @@ export class CreateDrawingService {
 
         if(currFile != null && currFile.extension == "md"){
             editor?.replaceRange(
-                `![[${newFilePath}]]`,
+                `![[${filePath}]]`,
                 editor?.getCursor()
             )
         }
+    }
+
+    private async createFile(file: string, content: string) {
+        const newFile = this.app.vault.getAbstractFileByPath(file)
+        if(newFile) {
+            await this.app.vault.delete(newFile)
+        }
+        this.createParentFolders(file)
+
+        const compressed = await gzip(content)
+        await this.app.vault.createBinary(file, compressed)
     }
 
     async getPdfInfo(data: Buffer) {

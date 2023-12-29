@@ -1,6 +1,6 @@
 import {App, Modal, Notice, Setting} from "obsidian";
 
-export class CreateDrawing extends Modal {
+export class SelectNameModal extends Modal {
     result: string;
     title: string
     onSubmit: (result: string) => void;
@@ -35,6 +35,12 @@ export class CreateDrawing extends Modal {
                         } catch (e) {
                             new Notice(e.message)
                         }
+                        this.close();
+                    }))
+            .addButton((btn) =>
+                btn
+                    .setButtonText("Cancel")
+                    .onClick(() => {
                         this.close();
                     }));
     }

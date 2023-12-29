@@ -5,7 +5,7 @@ export class CreatePdfDrawing extends FuzzySuggestModal<TFile> {
     createDrawingService: CreateDrawingService
     outputFolder: string
 
-    constructor(app: App, createDrawingService: CreateDrawingService, outputFolder: string = createDrawingService.outputFolder) {
+    constructor(app: App, createDrawingService: CreateDrawingService, outputFolder: string = createDrawingService.plugin.settings.xopp_location) {
         super(app);
         this.createDrawingService = createDrawingService
         this.outputFolder = outputFolder
@@ -15,7 +15,7 @@ export class CreatePdfDrawing extends FuzzySuggestModal<TFile> {
         const files = this.app.vault.getFiles();
 
         return files.filter(
-            (element, index, array) => {
+            (element) => {
                 return element.extension == "pdf"
             }
         )
