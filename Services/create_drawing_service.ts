@@ -1,4 +1,4 @@
-import {App, loadPdfJs, moment, normalizePath, Notice, TFile} from "obsidian";
+import {App, loadPdfJs, moment, normalizePath, TFile} from "obsidian";
 import {gzip, ungzip} from "node-gzip"
 import {FileAlreadyExistsModal} from "../Modals/file_already_exists_modal";
 import {SelectNameModal} from "../Modals/select_name_modal";
@@ -58,7 +58,7 @@ export class CreateDrawingService {
 
     async createFromPdf(file: TFile, outputFolder: string = this.plugin.settings.xopp_location) {
         const basePath = (this.app.vault.adapter as any).basePath;
-        const filePath = "/" + normalizePath(basePath + "/" + file.path);
+        const filePath = basePath + "/" + file.path
 
         const doc = await this.app.vault.readBinary(file)
 
