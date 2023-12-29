@@ -59,7 +59,13 @@ export default class XournalIntegrationPlugin extends Plugin {
             id: "create-drawing-from-pdf",
             name: "Create drawing from pdf",
             callback: () => {
-                new CreatePdfDrawing(this.app, this.createDrawingService).open();
+                const file = this.app.workspace.getActiveFile()
+
+                if(file === null || file.extension !== "pdf") {
+                    new CreatePdfDrawing(this.app, this.createDrawingService).open();
+                } else {
+                    this.createDrawingService.createFromPdf(file, file.parent?.path)
+                }
             }
         })
 
@@ -112,6 +118,22 @@ export default class XournalIntegrationPlugin extends Plugin {
                 });
             })
         );
+
+        this.registerEvent(
+            this.app.workspace.on("editor-menu", (menu, editor, info) => {
+                if(info?.file === null || info?.file?.extension !== "pdf") {
+                    return
+                }
+                menu.addItem((item) => {
+                    item
+                        .setTitle("Convert to Xournal drawing")
+                        .setIcon("document")
+                        .onClick(async () => {
+                            await this.createDrawingService.createFromPdf(info.file!!, info?.file?.parent?.path)
+                        });
+                });
+            })
+        )
     }
 
     onunload() {
