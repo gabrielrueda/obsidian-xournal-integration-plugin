@@ -116,7 +116,7 @@ export class CreateDrawingService {
 
         if(currFile != null && currFile.extension == "md"){
             editor?.replaceRange(
-                `![[${filePath}]]`,
+                `![[${filePath.slice(0, -5)}.pdf]]`,
                 editor?.getCursor()
             )
         }
