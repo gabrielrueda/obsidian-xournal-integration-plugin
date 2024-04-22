@@ -1,5 +1,7 @@
 import {FuzzySuggestModal, normalizePath, Notice, TFile} from "obsidian";
 
+import { ConvertToSvgService } from "Services/convert_to_svg_service";
+
 const {exec} = require('child_process');
 
 
@@ -20,6 +22,12 @@ export class EditDrawing extends FuzzySuggestModal<TFile> {
 
 
     async onChooseItem(file: TFile, evt: MouseEvent | KeyboardEvent) {
+
+        const convertToSvgService = new ConvertToSvgService(this.app);
+        await convertToSvgService.convertToSvg(file);
+        return;
+
+
         const basePath = (this.app.vault.adapter as any).basePath
 
         const filePath = normalizePath("\"" + basePath + "/" + file.path + "\"");

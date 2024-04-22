@@ -5,6 +5,7 @@ import {DeleteDrawing} from "Modals/delete_drawing_modal";
 import {Plugin, TFile, TFolder} from "obsidian";
 import {XournalIntegrationSettings, XournalIntegrationSettingsTab} from "settings";
 import {CreateDrawingService} from "./Services/create_drawing_service";
+import { ConvertToSvgService } from "Services/convert_to_svg_service";
 
 
 export default class XournalIntegrationPlugin extends Plugin {
@@ -23,6 +24,7 @@ export default class XournalIntegrationPlugin extends Plugin {
             id: "edit-drawing",
             name: "Edit drawing",
             callback: () => {
+
                 new EditDrawing(this.app).open();
             }
         })
