@@ -1,13 +1,10 @@
-import {App, loadPdfJs, moment, normalizePath, TFile} from "obsidian";
-import {gzip, ungzip} from "node-gzip"
-import {FileAlreadyExistsModal} from "../Modals/file_already_exists_modal";
-import {SelectNameModal} from "../Modals/select_name_modal";
-import XournalIntegrationPlugin from "../main";
-import { get } from "http";
+import {App, debounce, loadPdfJs, moment, normalizePath, TFile} from "obsidian";
+import {ungzip} from "node-gzip"
 
 
 
-export class ConvertToSvgService {
+
+export class RenderContentService {
     app: App
 
     constructor(app: App) {
@@ -26,8 +23,14 @@ export class ConvertToSvgService {
         return ""
     }
 
+
+    render_debounced = debounce((file: TFile) => {
+            this.convertToSvg(file)
+        }, 500, true);
+
     async convertToSvg(file: TFile) {
-        console.log("here")
+
+        console.log("Starting conversion for " + file.path)
         let fileContent = (await ungzip(await this.app.vault.readBinary(file))).toString()
 
 
@@ -54,7 +57,6 @@ export class ConvertToSvgService {
                 i = data_start
 
                 while(fileContent[i] != "<"){
-                    // console.log(i)
                     if(fileContent[i] == " "){
                         if(mid){
                             data.push(" L ")
@@ -93,7 +95,7 @@ export class ConvertToSvgService {
 
 
         await this.app.vault.create(file.path + ".md", data.join(""))
-        console.log("Done")
+        console.log("Finished conversion for " + file.path)
     }
 
 }

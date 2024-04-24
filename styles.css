@@ -1,8 +1,11 @@
-/*
-
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
-
-If your plugin does not need CSS, delete this file.
-
-*/
+.internal-embed[alt="xournal-embed"] .file-embed-title,
+.internal-embed[alt="xournal-embed"] .markdown-embed-title {
+display: none;
+}
+.internal-embed[alt="xournal-embed"].markdown-embed {
+padding: inherit;
+border: 0;
+}
+.markdown-reading-view .markdown-preview-view:not(.is-readable-line-width)>.markdown-preview-sizer {
+margin: inherit;
+} 
