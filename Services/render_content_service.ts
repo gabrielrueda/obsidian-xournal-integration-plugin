@@ -6,26 +6,10 @@ import {ungzip} from "node-gzip"
 
 export class RenderContentService {
     app: App
-    text_prop_conversion: Map<string, string>; 
-    image_prop_conversion: Map<string, string>; 
 
 
     constructor(app: App) {
         this.app = app
-        this.text_prop_conversion = new Map<string, string>([
-            ["font", "font-family"],
-            ["size", "font-size"],
-            ["x","x"],
-            ["y","y"],
-            ["color", "fill"]
-        ]);
-
-        this.image_prop_conversion = new Map<string, string>([
-            ["left", "x"],
-            ["top", "y"],
-            ["right", "width"],
-            ["bottom", "height"]
-        ]);
     }
 
 
@@ -49,49 +33,63 @@ export class RenderContentService {
 
     // NOTE: Map is ordered -> so if xournal changes order of it's properties, you must change it
     convert_text_field(file_content: string, data: string[], i: number){
-        data.push("<text ")
-        
-        // Add Properties:
-        this.text_prop_conversion.forEach((value, key) => {
-            i = file_content.indexOf(key, i) + key.length + 2
-            let j = file_content.indexOf("\"", i)
-            data.push(value + "=\"" + file_content.slice(i, j) + "\" ")
-            i = j + 1
-        });
+        const fontIndex = file_content.indexOf('font="', i) + 'font="'.length;
+        const sizeIndex = file_content.indexOf('size="', i) + 'size="'.length;
+        const xIndex = file_content.indexOf('x="', i) + 'x="'.length;
+        const yIndex = file_content.indexOf('y="', i) + 'y="'.length;
+        const colorIndex = file_content.indexOf('color="', i) + 'color="'.length;
 
-        // Adds Remaining Content: 
-        while(file_content[i] != "\n"){
-            data.push(file_content[i])
-            i++;
-        }
-        return i;
+        // Extract Attribute values using the found indices
+        const font = file_content.substring(fontIndex, file_content.indexOf('"', fontIndex));
+        const size = parseFloat(file_content.substring(sizeIndex, file_content.indexOf('"', sizeIndex)));
+        const x = parseFloat(file_content.substring(xIndex, file_content.indexOf('"', xIndex)));
+        let y = parseFloat(file_content.substring(yIndex, file_content.indexOf('"', yIndex)));
+        const color = file_content.substring(colorIndex, file_content.indexOf('"', colorIndex));
+
+        y += size
+
+        const raw_start = file_content.indexOf('>', colorIndex) + 1;
+        const raw_end = file_content.indexOf('<', raw_start);
+
+        const rawTextData = file_content.substring(raw_start, raw_end);
+    
+
+        data.push(`<text font-family="${font}" font-size="${size}" x="${x}" y="${y}" fill="${color}">${rawTextData}</text>`);
+
+        // console.log(data[data.length - 1]);
+        return raw_end;
+
     }
 
 
-    // NOTE: Map is ordered -> so if xournal changes order of it's properties, you must change it
-    convert_image_field(file_content: string, data: string[], i: number){
-        data.push("<image ")
-        
-        // Add Properties:
-        this.image_prop_conversion.forEach((value, key) => {
-            i = file_content.indexOf(key, i) + key.length + 2
-            let j = file_content.indexOf("\"", i)
-            data.push(value + "=\"" + file_content.slice(i, j) + "\" ")
-            i = j + 1
-        });
 
-        data.push(" xlink:href=\"data:image/png;base64,")
-        i = file_content.indexOf(">", i) + 1
+    convert_image_field(inputText: string, data: string[], i: number): number {
+        // Find the index of each attribute
+        const leftIndex = inputText.indexOf('left="', i) + 'left="'.length;
+        const topIndex = inputText.indexOf('top="', i) + 'top="'.length;
+        const rightIndex = inputText.indexOf('right="', i) + 'right="'.length;
+        const bottomIndex = inputText.indexOf('bottom="', i) + 'bottom="'.length;
+    
+        // Extract attribute values using the found indices
+        const left = parseFloat(inputText.substring(leftIndex, inputText.indexOf('"', leftIndex)));
+        const top = parseFloat(inputText.substring(topIndex, inputText.indexOf('"', topIndex)));
+        const right = parseFloat(inputText.substring(rightIndex, inputText.indexOf('"', rightIndex)));
+        const bottom = parseFloat(inputText.substring(bottomIndex, inputText.indexOf('"', bottomIndex)));
+    
+        // Calculate width and height
+        const width = right - left;
+        const height = bottom - top;
 
-        // Add Image Data
-        while(file_content[i] != "<"){
-            data.push(file_content[i])
-            i++;
-        }
+        const raw_start = inputText.indexOf('>', bottomIndex) + 1;
+        const raw_end = inputText.indexOf('<', raw_start);
 
-        data.push("\"/>")
-
-        return i;
+        const rawImgData = inputText.substring(raw_start, raw_end);
+    
+        // Construct the output text
+        data.push(`<image x="${left}" y="${top}" width="${width}" height="${height}" xlink:href="data:image/png;base64,${rawImgData}" />`);
+    
+        // console.log(data[data.length - 1]);
+        return raw_end;
     }
 
 

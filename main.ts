@@ -79,9 +79,8 @@ export default class XournalIntegrationPlugin extends Plugin {
         this.registerEvent(
 			this.app.vault.on("modify", async (file) => {
                 if (file instanceof TFile && file.extension == "xopp") {
-
-                    console.log("This file was modified: " + file.path)   
-                        await this.renderContentService.render_debounced(file);                        
+                    // console.log("This file was modified: " + file.path)   
+                    await this.renderContentService.render_debounced(file);                        
                 }
             }));
 
