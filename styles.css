@@ -9,3 +9,8 @@ border: 0;
 .markdown-reading-view .markdown-preview-view:not(.is-readable-line-width)>.markdown-preview-sizer {
 margin: inherit;
 } 
+
+
+div[data-path$='.xopp.md']{
+	display: none;
+}

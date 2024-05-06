@@ -6,6 +6,7 @@ import {Plugin, TFile, TFolder} from "obsidian";
 import {XournalIntegrationSettings, XournalIntegrationSettingsTab} from "settings";
 import {CreateDrawingService} from "./Services/create_drawing_service";
 import { RenderContentService } from "Services/render_content_service";
+import { EmbedDrawing } from "Modals/embed_drawing_modal";
 
 
 export default class XournalIntegrationPlugin extends Plugin {
@@ -29,6 +30,16 @@ export default class XournalIntegrationPlugin extends Plugin {
 
                 new EditDrawing(this.app).open();
             }
+        })
+
+
+        this.addCommand({
+            id: "embed-drawing",
+            name: "Embed drawing",
+            callback: () => {
+                new EmbedDrawing(this.app).open();
+            }
+        
         })
 
         this.addCommand({

@@ -93,8 +93,12 @@ export class RenderContentService {
     }
 
 
-    async convertToSvg(file: TFile) {
+    xournal_to_embed_name(file: TFile, page:number = 0){
+        return `${file.path}.md`
+    }
 
+
+    async convertToSvg(file: TFile) {
         console.log("Starting conversion for " + file.path)
         let fileContent = (await ungzip(await this.app.vault.readBinary(file))).toString()
 
@@ -106,7 +110,7 @@ export class RenderContentService {
         let data_start = 0;
         let mid = false;
 
-        let data = ["<svg viewBox=\"0 0 595.27559 841.88976\">"]
+        let data = [""]
 
 
         while(tag != "/xournal" || tag == null){
@@ -144,6 +148,11 @@ export class RenderContentService {
             else if(tag == "image"){
                 i = this.convert_image_field(fileContent, data, i)
             }
+            else if(tag == "page"){
+                data.push("<svg viewBox=\"0 0 595.27559 841.88976\">")
+            }else if(tag == "/page"){
+                data.push("</svg>")
+            }
 
             while(fileContent[i] != "\n"){
                 i++
@@ -156,7 +165,7 @@ export class RenderContentService {
         
         }
 
-        data.push("</svg>")
+        // data.push("</svg>")
 
         const newFile = this.app.vault.getAbstractFileByPath(file.path + ".md")
 
@@ -165,10 +174,11 @@ export class RenderContentService {
         }
 
 
-        await this.app.vault.create(file.path + ".md", data.join(""))
+        await this.app.vault.create(this.xournal_to_embed_name(file), data.join(""))
         // await this.app.vault.create(file.path + ".md", fileContent)
 
         console.log("Finished conversion for " + file.path)
     }
+
 
 }
