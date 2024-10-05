@@ -90,8 +90,7 @@ export default class XournalIntegrationPlugin extends Plugin {
         this.registerEvent(
 			this.app.vault.on("modify", async (file) => {
                 if (file instanceof TFile && file.extension == "xopp") {
-                    // console.log("This file was modified: " + file.path)   
-                    await this.renderContentService.render_debounced(file);                        
+                    await this.renderContentService.start_render(file);                        
                 }
             }));
 
@@ -113,6 +112,24 @@ export default class XournalIntegrationPlugin extends Plugin {
                 });
             })
         );
+
+        this.registerEvent(
+            this.app.workspace.on("file-menu", (menu, file) => {
+                if (!(file instanceof TFile && file.extension == "xopp")) {
+                    return
+                }
+                menu.addItem((item) => {
+                    item
+                        .setTitle("Refresh Xournal Drawing in Obsidian")
+                        .setIcon("document")
+                        .onClick(async () => {
+                            await this.renderContentService.start_render(file)
+                        });
+                });
+            })
+        );
+
+
         this.registerEvent(
             this.app.workspace.on("file-menu", (menu, file) => {
                 if (!(file instanceof TFolder)) {

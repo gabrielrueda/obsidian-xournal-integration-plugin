@@ -1,7 +1,5 @@
-import {App, debounce, loadPdfJs, moment, normalizePath, TFile} from "obsidian";
+import {App, debounce, TFile} from "obsidian";
 import {ungzip} from "node-gzip"
-import {compute, Point} from 'svg-variable-width-line';
-import { parse } from "path";
 
 const SCALE = 0.4;
 
@@ -26,7 +24,7 @@ export class RenderContentService {
     }
 
 
-    render_debounced = debounce((file: TFile) => {
+    start_render = debounce((file: TFile) => {
             this.convertToSvg(file)
         }, 500, true);
     
@@ -42,7 +40,6 @@ export class RenderContentService {
             }
 
             values.push(file_content.slice(index, file_content.indexOf("\"", index)))
-            // console.log(file_content.slice(index, file_content.indexOf("\"", index)))
             end_ind = Math.max(end_ind, index)
         }
         
@@ -129,7 +126,7 @@ export class RenderContentService {
     }
 
     convert_stroke_field(file_content: string, data: string[], i: number): number {
-        const attributes = ["color=", "width=", "capStyle="]
+        const attributes = ["color=", "width=", "capStyle=", "tool="]
         let values: string[] = []
         i = this.extract_attributes(file_content, attributes, values, i)
 
@@ -138,8 +135,13 @@ export class RenderContentService {
         let outliers = this.identify_outlier_widths(widths)
 
         const width = (widths.filter((ele, ind) => !outliers.has(ind)).reduce((a, b) => a + b)) / (widths.length - outliers.size)
+
+        let opacity = 1
+        if (values[3] == "highlighter") {
+            opacity = 0.5
+        }
                 
-        data.push(`<path fill="none" stroke-width="${width}" stroke-linecap="${values[2]}" stroke-linejoin="${values[2]}" stroke="${values[0]}" stroke-opacity="1" stroke-miterlimit="10" d=`)
+        data.push(`<path fill="none" stroke-width="${width}" stroke-linecap="${values[2]}" stroke-linejoin="${values[2]}" stroke="${values[0]}" stroke-opacity="${opacity}" stroke-miterlimit="10" d=`)
 
         let ptr_ind = 0 
         let mid = false
@@ -183,6 +185,7 @@ export class RenderContentService {
     async convertToSvg(file: TFile) {
         console.log("Starting conversion for " + file.path)
         let fileContent = (await ungzip(await this.app.vault.readBinary(file))).toString()
+        console.log(fileContent)
 
         let tag = this.getTag(fileContent, 0)
         let i = tag.length + 1;
