@@ -95,6 +95,7 @@ export default class XournalIntegrationPlugin extends Plugin {
                 }
             }));
 
+    
 
 
         this.registerEvent(

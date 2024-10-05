@@ -1,8 +1,9 @@
 import {App, debounce, loadPdfJs, moment, normalizePath, TFile} from "obsidian";
 import {ungzip} from "node-gzip"
+import {compute, Point} from 'svg-variable-width-line';
+import { parse } from "path";
 
-
-
+const SCALE = 0.4;
 
 export class RenderContentService {
     app: App
@@ -30,66 +31,147 @@ export class RenderContentService {
         }, 500, true);
     
 
+    extract_attributes(file_content: string, attributes: string[], values:string[], i: number){
+        let index = 0
+        let end_ind = i
+        for(let j = 0; j < attributes.length; j++){
+            if(!attributes[j].endsWith("=")){
+                index = file_content.indexOf(attributes[j] + "=", i) + (attributes[j] + "=").length
+            } else {
+                index = file_content.indexOf(attributes[j], i) + attributes[j].length + 1
+            }
 
-    // NOTE: Map is ordered -> so if xournal changes order of it's properties, you must change it
-    convert_text_field(file_content: string, data: string[], i: number){
-        const fontIndex = file_content.indexOf('font="', i) + 'font="'.length;
-        const sizeIndex = file_content.indexOf('size="', i) + 'size="'.length;
-        const xIndex = file_content.indexOf('x="', i) + 'x="'.length;
-        const yIndex = file_content.indexOf('y="', i) + 'y="'.length;
-        const colorIndex = file_content.indexOf('color="', i) + 'color="'.length;
+            values.push(file_content.slice(index, file_content.indexOf("\"", index)))
+            // console.log(file_content.slice(index, file_content.indexOf("\"", index)))
+            end_ind = Math.max(end_ind, index)
+        }
+        
+        return file_content.indexOf(">", end_ind)
+    }
 
-        // Extract Attribute values using the found indices
-        const font = file_content.substring(fontIndex, file_content.indexOf('"', fontIndex));
-        const size = parseFloat(file_content.substring(sizeIndex, file_content.indexOf('"', sizeIndex)));
-        const x = parseFloat(file_content.substring(xIndex, file_content.indexOf('"', xIndex)));
-        let y = parseFloat(file_content.substring(yIndex, file_content.indexOf('"', yIndex)));
-        const color = file_content.substring(colorIndex, file_content.indexOf('"', colorIndex));
 
-        y += size
-
-        const raw_start = file_content.indexOf('>', colorIndex) + 1;
+    extract_raw_data(file_content: string, i: number){
+        const raw_start = file_content.indexOf('>', i) + 1;
         const raw_end = file_content.indexOf('<', raw_start);
 
-        const rawTextData = file_content.substring(raw_start, raw_end);
-    
+        return file_content.substring(raw_start, raw_end)
+    }
 
-        data.push(`<text font-family="${font}" font-size="${size}" x="${x}" y="${y}" fill="${color}">${rawTextData}</text>`);
+    convert_text_field(file_content: string, data: string[], i: number): number {
+        const attributes = ["font=", "size=", "x=", "y=", "color="]
+        let values: string[] = []
+        i = this.extract_attributes(file_content, attributes, values, i)
+        
 
-        // console.log(data[data.length - 1]);
-        return raw_end;
+        let y = parseFloat(values[3]) + parseFloat(values[1])
+        const raw_data = this.extract_raw_data(file_content, i)
 
+        data.push(`<text font-family="${values[0]}" font-size="${values[1]}" x="${values[2]}" y="${y}" fill="${values[4]}">${raw_data}</text>`);
+
+        return i + raw_data.length
     }
 
 
 
-    convert_image_field(inputText: string, data: string[], i: number): number {
-        // Find the index of each attribute
-        const leftIndex = inputText.indexOf('left="', i) + 'left="'.length;
-        const topIndex = inputText.indexOf('top="', i) + 'top="'.length;
-        const rightIndex = inputText.indexOf('right="', i) + 'right="'.length;
-        const bottomIndex = inputText.indexOf('bottom="', i) + 'bottom="'.length;
-    
-        // Extract attribute values using the found indices
-        const left = parseFloat(inputText.substring(leftIndex, inputText.indexOf('"', leftIndex)));
-        const top = parseFloat(inputText.substring(topIndex, inputText.indexOf('"', topIndex)));
-        const right = parseFloat(inputText.substring(rightIndex, inputText.indexOf('"', rightIndex)));
-        const bottom = parseFloat(inputText.substring(bottomIndex, inputText.indexOf('"', bottomIndex)));
+    convert_image_field(file_content: string, data: string[], i: number): number {
+        const attributes = ["left=", "top=", "right=", "bottom="]
+        let values: string[] = []
+        i = this.extract_attributes(file_content, attributes, values, i)
+        
+        const left = parseFloat(values[0]);
+        const top = parseFloat(values[1]);
+        const right = parseFloat(values[2]);
+        const bottom = parseFloat(values[3]);
     
         // Calculate width and height
         const width = right - left;
         const height = bottom - top;
 
-        const raw_start = inputText.indexOf('>', bottomIndex) + 1;
-        const raw_end = inputText.indexOf('<', raw_start);
-
-        const rawImgData = inputText.substring(raw_start, raw_end);
+        const raw_image_data = this.extract_raw_data(file_content, i)
     
         // Construct the output text
-        data.push(`<image x="${left}" y="${top}" width="${width}" height="${height}" xlink:href="data:image/png;base64,${rawImgData}" />`);
+        data.push(`<image x="${left}" y="${top}" width="${width}" height="${height}" xlink:href="data:image/png;base64,${raw_image_data}" />`);
     
-        // console.log(data[data.length - 1]);
-        return raw_end;
+        return i + raw_image_data.length;
+    }
+
+    convert_page_field(file_content: string, data: string[], i: number): number {
+        const attributes = ["width=", "height="]
+        let values: string[] = []
+
+        i = this.extract_attributes(file_content, attributes, values, i)
+        
+        data.push(`<svg viewBox="0 0 ${values[0]} ${values[1]}">`)
+
+        return i
+    }
+
+    identify_outlier_widths(widths: number[]) : Set<number> {
+        const TARGET_Z = 1.5
+        if(widths.length == 1) {
+            return new Set<number>;
+        }
+
+        const n = widths.length
+        const mean = (widths.reduce((a, b) => a + b)) / n
+        const sd =  Math.pow((widths.reduce((a,b) => a + Math.pow((b - mean), 2)) / (n - 1)), 0.5)
+         
+        let outliers = new Set<number>();
+
+        for(let i = 0; i< n; i++){
+            const z_score = (widths[i] - mean) / sd
+            if(Math.abs(z_score) > TARGET_Z){
+                outliers.add(i)
+            }
+        }
+
+        return outliers
+    }
+
+    convert_stroke_field(file_content: string, data: string[], i: number): number {
+        const attributes = ["color=", "width=", "capStyle="]
+        let values: string[] = []
+        i = this.extract_attributes(file_content, attributes, values, i)
+
+        const widths = values[1].split(" ").map(parseFloat)
+
+        let outliers = this.identify_outlier_widths(widths)
+
+        const width = (widths.filter((ele, ind) => !outliers.has(ind)).reduce((a, b) => a + b)) / (widths.length - outliers.size)
+                
+        data.push(`<path fill="none" stroke-width="${width}" stroke-linecap="${values[2]}" stroke-linejoin="${values[2]}" stroke="${values[0]}" stroke-opacity="1" stroke-miterlimit="10" d=`)
+
+        let ptr_ind = 0 
+        let mid = false
+        let first = true
+        let data_start = file_content.indexOf(">", i) + 1
+        i = data_start
+
+        data.push(`"M `)
+
+        while(file_content[i] != "<"){
+            if(file_content[i] == " "){
+                if(mid){
+                    ptr_ind++
+                    if(!outliers.has(ptr_ind) && first == false){
+                        data.push(" L ")
+                    }
+                    mid = false
+                }else{
+                    if(!outliers.has(ptr_ind)){
+                        data.push(" ")
+                    }
+                    mid = true
+                }
+            }else if(!outliers.has(ptr_ind)){
+                    data.push(file_content[i])
+                    first = false
+            }
+            i++;
+        }
+
+        data.push("\"/>")
+        return i;
     }
 
 
@@ -102,45 +184,14 @@ export class RenderContentService {
         console.log("Starting conversion for " + file.path)
         let fileContent = (await ungzip(await this.app.vault.readBinary(file))).toString()
 
-
         let tag = this.getTag(fileContent, 0)
-
         let i = tag.length + 1;
-
-        let data_start = 0;
-        let mid = false;
-
-        let data = [""]
-
+        let data = [""]          
 
         while(tag != "/xournal" || tag == null){
+
             if(tag == "stroke"){
-
-                i = fileContent.indexOf("color", i) + 7
-
-                let color = fileContent.slice(i, fileContent.indexOf("\"", i))
-
-                data.push("<path fill=\"none\" stroke-width=\"1.41\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke=\"" + color + "\" stroke-opacity=\"1\" stroke-miterlimit=\"10\" d=\"M ")
-                mid = false
-                data_start = fileContent.indexOf(">", i) + 1
-                i = data_start
-
-                while(fileContent[i] != "<"){
-                    if(fileContent[i] == " "){
-                        if(mid){
-                            data.push(" L ")
-                            mid = false
-                        }else{
-                            data.push(" ")
-                            mid = true
-                        }
-                    }else{
-                        data.push(fileContent[i])
-                    }
-                    i++;
-                }
-
-                data.push("\"/>")
+                i = this.convert_stroke_field(fileContent, data, i)
             }
             else if(tag == "text"){
                 i = this.convert_text_field(fileContent, data, i)
@@ -149,7 +200,7 @@ export class RenderContentService {
                 i = this.convert_image_field(fileContent, data, i)
             }
             else if(tag == "page"){
-                data.push("<svg viewBox=\"0 0 595.27559 841.88976\">")
+                i = this.convert_page_field(fileContent, data, i)
             }else if(tag == "/page"){
                 data.push("</svg>")
             }
@@ -157,15 +208,13 @@ export class RenderContentService {
             while(fileContent[i] != "\n"){
                 i++
             }
+
             i++;
-            
 
             tag = this.getTag(fileContent, i)
             i = i + tag.length + 1
         
         }
-
-        // data.push("</svg>")
 
         const newFile = this.app.vault.getAbstractFileByPath(file.path + ".md")
 
@@ -175,7 +224,6 @@ export class RenderContentService {
 
 
         await this.app.vault.create(this.xournal_to_embed_name(file), data.join(""))
-        // await this.app.vault.create(file.path + ".md", fileContent)
 
         console.log("Finished conversion for " + file.path)
     }
