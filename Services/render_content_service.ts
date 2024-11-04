@@ -5,10 +5,14 @@ const SCALE = 0.4;
 
 export class RenderContentService {
     app: App
+    window: number[]
+    buffer: number
 
 
     constructor(app: App) {
         this.app = app
+        this.window = []
+        this.buffer = 5
     }
 
 
@@ -84,6 +88,10 @@ export class RenderContentService {
         const width = right - left;
         const height = bottom - top;
 
+        // Update Boundary Window
+        this.update_window(left, top)
+        this.update_window(right, bottom)
+
         const raw_image_data = this.extract_raw_data(file_content, i)
     
         // Construct the output text
@@ -92,15 +100,42 @@ export class RenderContentService {
         return i + raw_image_data.length;
     }
 
-    convert_page_field(file_content: string, data: string[], i: number): number {
-        const attributes = ["width=", "height="]
-        let values: string[] = []
-
-        i = this.extract_attributes(file_content, attributes, values, i)
-        
-        data.push(`<svg viewBox="0 0 ${values[0]} ${values[1]}">`)
+    convert_page_field(file_content: string, data: string[], i: number, pageStart: number): number {
+        data[pageStart] = `<svg viewBox="${this.window[0]} ${this.window[1]} ${this.window[2]} ${this.window[3]}">`
+        data.push("</svg>")
 
         return i
+    }
+
+    init_boundary_window(file_content: string, data:string[], i: number): number {
+        this.window = []
+    
+        data.push("<svg>")
+
+        return i
+    }
+
+    update_window(x: number, y: number) {
+        console.log("new point", x, y)
+        if(this.window.length === 0){
+            this.window = [x, y, x, y]
+            return
+        }
+
+        if (x < this.window[0]) {
+            this.window[0] = x
+        } 
+        else if (x > this.window[2]) {
+            this.window[2] = x
+        }
+
+        if (y < this.window[1]) {
+            this.window[1] = y
+        }
+        else if (y > this.window[3]) {
+            this.window[3] = y
+        }
+
     }
 
     identify_outlier_widths(widths: number[]) : Set<number> {
@@ -143,35 +178,17 @@ export class RenderContentService {
                 
         data.push(`<path fill="none" stroke-width="${width}" stroke-linecap="${values[2]}" stroke-linejoin="${values[2]}" stroke="${values[0]}" stroke-opacity="${opacity}" stroke-miterlimit="10" d=`)
 
-        let ptr_ind = 0 
-        let mid = false
-        let first = true
-        let data_start = file_content.indexOf(">", i) + 1
-        i = data_start
+        let raw_data = this.extract_raw_data(file_content, i).split(" ").map(parseFloat)
 
-        data.push(`"M `)
+        data.push(`"M ${raw_data[0]},${raw_data[1]}`)
+        this.update_window(raw_data[0], raw_data[1])
 
-        while(file_content[i] != "<"){
-            if(file_content[i] == " "){
-                if(mid){
-                    ptr_ind++
-                    if(!outliers.has(ptr_ind) && first == false){
-                        data.push(" L ")
-                    }
-                    mid = false
-                }else{
-                    if(!outliers.has(ptr_ind)){
-                        data.push(" ")
-                    }
-                    mid = true
-                }
-            }else if(!outliers.has(ptr_ind)){
-                    data.push(file_content[i])
-                    first = false
-            }
-            i++;
+        for (let j = 2; j < raw_data.length; j+=2){
+            data.push(` L ${raw_data[j]} ${raw_data[j+1]}`) 
+            this.update_window(raw_data[j], raw_data[j+1])
         }
 
+      
         data.push("\"/>")
         return i;
     }
@@ -185,11 +202,11 @@ export class RenderContentService {
     async convertToSvg(file: TFile) {
         console.log("Starting conversion for " + file.path)
         let fileContent = (await ungzip(await this.app.vault.readBinary(file))).toString()
-        console.log(fileContent)
 
         let tag = this.getTag(fileContent, 0)
         let i = tag.length + 1;
-        let data = [""]          
+        let data = [""]
+        let pageStart = 0          
 
         while(tag != "/xournal" || tag == null){
 
@@ -203,9 +220,10 @@ export class RenderContentService {
                 i = this.convert_image_field(fileContent, data, i)
             }
             else if(tag == "page"){
-                i = this.convert_page_field(fileContent, data, i)
+                i = this.init_boundary_window(fileContent, data, i)
+                pageStart = data.length - 1 
             }else if(tag == "/page"){
-                data.push("</svg>")
+                i = this.convert_page_field(fileContent, data, i, pageStart)
             }
 
             while(fileContent[i] != "\n"){
