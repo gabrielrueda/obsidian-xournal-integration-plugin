@@ -1,5 +1,6 @@
 import {FuzzySuggestModal, normalizePath, Notice, TFile} from "obsidian";
 
+
 const {exec} = require('child_process');
 
 
@@ -20,13 +21,12 @@ export class EditDrawing extends FuzzySuggestModal<TFile> {
 
 
     async onChooseItem(file: TFile, evt: MouseEvent | KeyboardEvent) {
+
         const basePath = (this.app.vault.adapter as any).basePath
 
         const filePath = normalizePath("\"" + basePath + "/" + file.path + "\"");
 
-        const pdfFilePath = filePath.slice(0, -5) + "pdf" + "\"";
-
-        const command = "xournalpp " + filePath + "; xournalpp -p " + pdfFilePath + " " + filePath;
+        const command = "xournalpp " + filePath;
 
         exec(command, (err: string) => {
             // once the command has completed, the callback function is called

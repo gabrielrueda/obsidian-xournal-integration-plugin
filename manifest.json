@@ -2,7 +2,7 @@
 	"id": "xournal-integration-plugin",
 	"name": "Xournal++ Integration for Obsidian",
 	"version": "1.0.0",
-	"minAppVersion": "0.15.0",
+	"minAppVersion": "1.7.0",
 	"description": "Xournal++ is a drawing application for Windows, MacOS, & Linux. This plugin allows you to open and embed xournal files to your obsidian vault.",
 	"author": "Gabriel Rueda",
 	"authorUrl": "https://obsidian.md",

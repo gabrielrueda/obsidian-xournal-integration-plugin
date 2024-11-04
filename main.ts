@@ -5,11 +5,14 @@ import {DeleteDrawing} from "Modals/delete_drawing_modal";
 import {Plugin, TFile, TFolder} from "obsidian";
 import {XournalIntegrationSettings, XournalIntegrationSettingsTab} from "settings";
 import {CreateDrawingService} from "./Services/create_drawing_service";
+import { RenderContentService } from "Services/render_content_service";
+import { EmbedDrawing } from "Modals/embed_drawing_modal";
 
 
 export default class XournalIntegrationPlugin extends Plugin {
     settings: XournalIntegrationSettings;
     createDrawingService: CreateDrawingService
+    renderContentService: RenderContentService
 
 
     async onload() {
@@ -17,14 +20,26 @@ export default class XournalIntegrationPlugin extends Plugin {
 
         this.settings = Object.assign(new XournalIntegrationSettings(), await this.loadData());
         this.addSettingTab(new XournalIntegrationSettingsTab(this.app, this));
-        this.createDrawingService = new CreateDrawingService(this.app, this)
+        this.createDrawingService = new CreateDrawingService(this.app, this);
+        this.renderContentService = new RenderContentService(this.app);
 
         this.addCommand({
             id: "edit-drawing",
             name: "Edit drawing",
             callback: () => {
+
                 new EditDrawing(this.app).open();
             }
+        })
+
+
+        this.addCommand({
+            id: "embed-drawing",
+            name: "Embed drawing",
+            callback: () => {
+                new EmbedDrawing(this.app).open();
+            }
+        
         })
 
         this.addCommand({
@@ -69,6 +84,19 @@ export default class XournalIntegrationPlugin extends Plugin {
             }
         })
 
+
+
+        // Event for allowing file esit:
+        this.registerEvent(
+			this.app.vault.on("modify", async (file) => {
+                if (file instanceof TFile && file.extension == "xopp") {
+                    await this.renderContentService.start_render(file);                        
+                }
+            }));
+
+    
+
+
         this.registerEvent(
             this.app.workspace.on("file-menu", (menu, file) => {
                 if (!(file instanceof TFile && file.extension == "pdf")) {
@@ -84,6 +112,24 @@ export default class XournalIntegrationPlugin extends Plugin {
                 });
             })
         );
+
+        this.registerEvent(
+            this.app.workspace.on("file-menu", (menu, file) => {
+                if (!(file instanceof TFile && file.extension == "xopp")) {
+                    return
+                }
+                menu.addItem((item) => {
+                    item
+                        .setTitle("Refresh Xournal Drawing in Obsidian")
+                        .setIcon("document")
+                        .onClick(async () => {
+                            await this.renderContentService.start_render(file)
+                        });
+                });
+            })
+        );
+
+
         this.registerEvent(
             this.app.workspace.on("file-menu", (menu, file) => {
                 if (!(file instanceof TFolder)) {
