@@ -1,5 +1,8 @@
-import {App, debounce, TFile} from "obsidian";
+import {App, debounce, TFile, normalizePath, Notice} from "obsidian";
 import {ungzip} from "node-gzip"
+
+
+const {exec} = require('child_process');
 
 const SCALE = 0.4;
 
@@ -160,6 +163,18 @@ export class RenderContentService {
         return outliers
     }
 
+    convert_background_field(file_content: string, data: string[], i: number): number {
+        const attributes = ["type="]
+        let values: string[] = []
+        i = this.extract_attributes(file_content, attributes, values, i)
+
+        if(values[0] == "pdf"){
+            throw new Error("PDF files are not supported")
+        }
+
+        return i
+    }
+
     convert_stroke_field(file_content: string, data: string[], i: number): number {
         const attributes = ["color=", "width=", "capStyle=", "tool="]
         let values: string[] = []
@@ -198,10 +213,41 @@ export class RenderContentService {
         return `${file.path}.md`
     }
 
+    convertToPDF(file: TFile) {
+        const basePath = (this.app.vault.adapter as any).basePath
+
+        const filePath = normalizePath("\"" + basePath + "/" + file.path + "\"");
+        const pdfFilePath = filePath.slice(0, -5) + "pdf" + "\""; 
+
+        const command = "xournalpp -p " + pdfFilePath + " " + filePath;
+        
+        exec(command, (err: string) => {
+            // once the command has completed, the callback function is called
+            if (err) {
+                const newFile = this.app.vault.getAbstractFileByPath(file.path + ".md")
+
+                if(newFile) {
+                    this.app.vault.delete(newFile)
+                }
+        
+                this.app.vault.create(this.xournal_to_embed_name(file), "ERROR: Could not convert to PDF")
+            }
+        })
+
+        const newFile = this.app.vault.getAbstractFileByPath(file.path + ".md")
+
+        if(newFile) {
+            this.app.vault.delete(newFile)
+        }
+
+        this.app.vault.create(this.xournal_to_embed_name(file), `![](${file.path.slice(0, -5) + ".pdf"})`)
+    }
+
 
     async convertToSvg(file: TFile) {
         console.log("Starting conversion for " + file.path)
         let fileContent = (await ungzip(await this.app.vault.readBinary(file))).toString()
+        // console.log(fileContent)
 
         let tag = this.getTag(fileContent, 0)
         let i = tag.length + 1;
@@ -210,7 +256,14 @@ export class RenderContentService {
 
         while(tag != "/xournal" || tag == null){
 
-            if(tag == "stroke"){
+            if(tag == "background"){
+                try{
+                    i = this.convert_background_field(fileContent, data, i)
+                } catch(e) {
+                    return this.convertToPDF(file)
+                }
+            }
+            else if(tag == "stroke"){
                 i = this.convert_stroke_field(fileContent, data, i)
             }
             else if(tag == "text"){
