@@ -16,6 +16,10 @@ An obsidian plugin to seemlessly integrate Xournal(++) files into your Obdidian 
 ### Multiple commands for working with Xournal:
 ![image](https://github.com/user-attachments/assets/84a958a9-c5c0-4c8a-aac2-22b071ce0c47)
 
+### How do I embed an xournal drawing
+You can either
+1. Run the "Embed Drawing" command from the command pallete
+2. You enter the embed string manually in the format: `![[_xournal/week8_comp4250.xopp.md|xournal-embed]]`
 
 ### Create file from template:
 
@@ -30,6 +34,12 @@ https://github.com/Joshyx/obsidian-xournal-integration-plugin/assets/69637774/79
 
 ### Render Fallback 
 - if xournal++ file is an annotated PDF - it will fallback to exporting the drawing as a pdf and embed that (only on linux or macOS)
+
+## FAQ
+1. How do update my xournal++ changes in obsidian? You don't it will automatically do so when an xournal++ file is updated and when you load obsidian
+2. What are the fallbacks with Windows? The plugin works with windows EXCEPT you cannot render any xournal++ drawings that an annotated PDF
+3. How do I add my template for new drawings? You add 
+4. What is the new xournal file folder? This is the folder where any new xournal drawings that you create will be added to
 
 ## Install / Build on Local Machine
 
