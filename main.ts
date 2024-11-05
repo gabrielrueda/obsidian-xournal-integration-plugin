@@ -23,6 +23,14 @@ export default class XournalIntegrationPlugin extends Plugin {
         this.createDrawingService = new CreateDrawingService(this.app, this);
         this.renderContentService = new RenderContentService(this.app);
 
+        // Run the render service on all xopp files initally in case updates to the files were made while obsidian was closed
+        for (let file of this.app.vault.getFiles()) {
+            if (file instanceof TFile && file.extension == "xopp") {
+                await this.renderContentService.convertToSvg(file)
+            }
+        }
+        console.log("Completed initial rendering of all files")
+
         this.addCommand({
             id: "edit-drawing",
             name: "Edit drawing",
@@ -31,7 +39,6 @@ export default class XournalIntegrationPlugin extends Plugin {
                 new EditDrawing(this.app).open();
             }
         })
-
 
         this.addCommand({
             id: "embed-drawing",
@@ -90,7 +97,7 @@ export default class XournalIntegrationPlugin extends Plugin {
         this.registerEvent(
 			this.app.vault.on("modify", async (file) => {
                 if (file instanceof TFile && file.extension == "xopp") {
-                    await this.renderContentService.start_render(file);                        
+                    await this.renderContentService.convertToSvg_debounced(file);                        
                 }
             }));
 
@@ -123,7 +130,7 @@ export default class XournalIntegrationPlugin extends Plugin {
                         .setTitle("Refresh Xournal Drawing in Obsidian")
                         .setIcon("document")
                         .onClick(async () => {
-                            await this.renderContentService.start_render(file)
+                            await this.renderContentService.convertToSvg_debounced(file)
                         });
                 });
             })
