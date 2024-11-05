@@ -1,7 +1,7 @@
 {
 	"id": "xournal-integration",
 	"name": "Xournal++ Integration",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"minAppVersion": "1.7.0",
 	"description": "Xournal++ is a drawing application for Windows, MacOS, & Linux. This plugin allows you to open, create and embed xournal files.",
 	"author": "Gabriel Rueda",

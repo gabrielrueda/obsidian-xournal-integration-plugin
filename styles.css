@@ -5,6 +5,8 @@ display: none;
 .internal-embed[alt="xournal-embed"].markdown-embed {
 padding: inherit;
 border: 0;
+padding-bottom: 0px !important; 
+min-height: 0px !important; 
 }
 .markdown-reading-view .markdown-preview-view:not(.is-readable-line-width)>.markdown-preview-sizer {
 margin: inherit;
