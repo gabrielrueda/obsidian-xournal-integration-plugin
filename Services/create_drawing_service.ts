@@ -116,7 +116,7 @@ export class CreateDrawingService {
 
         if(currFile != null && currFile.extension == "md"){
             editor?.replaceRange(
-                `![[${filePath.slice(0, -5)}.pdf]]`,
+                `![[${filePath}.md|xournal-embed]]`,
                 editor?.getCursor()
             )
         }

@@ -24,11 +24,14 @@ export default class XournalIntegrationPlugin extends Plugin {
         this.renderContentService = new RenderContentService(this.app);
 
         // Run the render service on all xopp files initally in case updates to the files were made while obsidian was closed
+        const tasks = []
         for (let file of this.app.vault.getFiles()) {
             if (file instanceof TFile && file.extension == "xopp") {
-                await this.renderContentService.convertToSvg(file)
+                tasks.push(this.renderContentService.convertToSvg(file))
             }
         }
+
+        await Promise.all(tasks)
         console.log("Completed initial rendering of all files")
 
         this.addCommand({
