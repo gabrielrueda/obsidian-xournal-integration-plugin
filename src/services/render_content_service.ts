@@ -1,12 +1,10 @@
 import {App, debounce, TFile, normalizePath, Notice} from "obsidian";
 import {ungzip} from "node-gzip"
-import XournalFileContext from "./XournalFileContext";
-import XournalFileDeserializedParser from "./XournalFileDeserializedParser";
+import XournalFileContext from "../XournalFileContext";
+import XournalFileDeserializedParser from "../XournalFileDeserializedParser";
 
 
 const {exec} = require('child_process');
-
-const SCALE = 0.4;
 
 export class RenderContentService {
     app: App
@@ -25,19 +23,16 @@ export class RenderContentService {
             this.convertToSvg(file)
         }, 500, true);
     
-    private xournal_to_embed_name(file: TFile){
-        return `${file.path}.md`
-    }
+
 
     async createNewFile(file: TFile, data: string) {
-        const newFile = this.app.vault.getAbstractFileByPath(file.path + ".md")
+        const newFile = this.app.vault.getAbstractFileByPath(`${file.path}.md`)
 
         if(newFile) {
             await this.app.vault.delete(newFile)
         }
 
-
-        await this.app.vault.create(this.xournal_to_embed_name(file), data)
+        await this.app.vault.create(`${file.path}.md`, data)
     }
 
     convertToPDF(file: TFile) {

@@ -14,7 +14,7 @@ export default class XournalFileDeserializedParser {
 
     public parseTagAtCursor(): string{
         const fileContent = this.xournalFile.rawContent
-        const start = this.xournalFile.getTagIndex()
+        const start = this.xournalFile.getFileIndex()
         let i = start
 
         while(fileContent[i] != "\n"){

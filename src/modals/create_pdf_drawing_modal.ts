@@ -1,5 +1,5 @@
 import {App, FuzzySuggestModal, TFile} from "obsidian";
-import {CreateDrawingService} from "../Services/create_drawing_service";
+import {CreateDrawingService} from "../services/create_drawing_service";
 
 export class CreatePdfDrawing extends FuzzySuggestModal<TFile> {
     createDrawingService: CreateDrawingService

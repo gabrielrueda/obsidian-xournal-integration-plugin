@@ -1,12 +1,12 @@
-import {SelectNameModal} from "Modals/select_name_modal";
-import {EditDrawing} from "Modals/edit_drawing_modal";
-import {CreatePdfDrawing} from "Modals/create_pdf_drawing_modal";
-import {DeleteDrawing} from "Modals/delete_drawing_modal";
+import {SelectNameModal} from "src/modals/select_name_modal";
+import {EditDrawing} from "src/modals/edit_drawing_modal";
+import {CreatePdfDrawing} from "src/modals/create_pdf_drawing_modal";
+import {DeleteDrawing} from "src/modals/delete_drawing_modal";
 import {Plugin, TFile, TFolder} from "obsidian";
-import {XournalIntegrationSettings, XournalIntegrationSettingsTab} from "settings";
-import {CreateDrawingService} from "./Services/create_drawing_service";
-import { RenderContentService } from "Services/render_content_service";
-import { EmbedDrawing } from "Modals/embed_drawing_modal";
+import {XournalIntegrationSettings, XournalIntegrationSettingsTab} from "./settings";
+import {CreateDrawingService} from "./src/services/create_drawing_service";
+import { RenderContentService } from "src/services/render_content_service";
+import { EmbedDrawing } from "src/modals/embed_drawing_modal";
 
 
 export default class XournalIntegrationPlugin extends Plugin {

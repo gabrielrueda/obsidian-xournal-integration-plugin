@@ -36,13 +36,8 @@ export default class XournalFileContext {
         return true
     }
 
-    public getTagIndex() {
-        return this.tag_inds[this.curr_tag]
-    }
-
-
     public getFileIndex() {
-        return this.getTagIndex()
+        return this.tag_inds[this.curr_tag]
     }
 
 

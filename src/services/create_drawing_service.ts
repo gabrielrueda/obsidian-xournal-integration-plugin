@@ -1,8 +1,8 @@
 import {App, loadPdfJs, moment, normalizePath, TFile} from "obsidian";
 import {gzip, ungzip} from "node-gzip"
-import {FileAlreadyExistsModal} from "../Modals/file_already_exists_modal";
-import {SelectNameModal} from "../Modals/select_name_modal";
-import XournalIntegrationPlugin from "../main";
+import {FileAlreadyExistsModal} from "../modals/file_already_exists_modal";
+import {SelectNameModal} from "../modals/select_name_modal";
+import XournalIntegrationPlugin from "../../main";
 
 export class CreateDrawingService {
     app: App
