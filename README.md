@@ -41,7 +41,12 @@ https://github.com/Joshyx/obsidian-xournal-integration-plugin/assets/69637774/79
 3. How do I add my template for new drawings? You add 
 4. What is the new xournal file folder? This is the folder where any new xournal drawings that you create will be added to
 
-## Install / Build on Local Machine
+## Install Plugin
+- Create folder in plugins directory called "xournal-integration"
+  - path: `.obsidian/plugins/xournal-integration`
+- Go to the releases tab and download main.js, mainfest.json and styles.css to that new folder  
+
+## Setup Dev Environemnt/Build on Local Machine
 
 - Clone this repo.
 - Make sure your NodeJS is at least v16 (`node --version`).
