@@ -12,7 +12,13 @@ min-height: 0px !important;
 margin: inherit;
 } 
 
+.internal-embed[alt="xournal-embed"] .markdown-embed-content,
+.internal-embed[alt="xournal-embed"] .markdown-embed-content > .markdown-preview-view { 
+    max-height: unset;
+}
 
 div[data-path$='.xopp.md']{
 	display: none;
 }
+
+
