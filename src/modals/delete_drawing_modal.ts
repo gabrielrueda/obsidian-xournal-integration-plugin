@@ -1,7 +1,8 @@
-import {FuzzySuggestModal, TFile} from "obsidian";
+import {App, FuzzySuggestModal, TFile} from "obsidian";
 
 
-export class DeleteDrawing extends FuzzySuggestModal<TFile> {
+export class DeleteDrawing extends FuzzySuggestModal<TFile> {   
+
     getItems(): TFile[] {
         const files = this.app.vault.getFiles();
 
@@ -18,14 +19,21 @@ export class DeleteDrawing extends FuzzySuggestModal<TFile> {
 
 
     async onChooseItem(file: TFile, evt: MouseEvent | KeyboardEvent) {
-        const pdfFile = this.app.vault.getAbstractFileByPath(file.path.slice(0, -4) + "pdf")
+        // OLD DELETE LOGIC:
+        // const pdfFile = this.app.vault.getAbstractFileByPath(file.path.slice(0, -4) + "pdf")
 
-        if (pdfFile != null) {
-            this.app.vault.delete(pdfFile)
-        }
+        // if (pdfFile != null) {
+        //     this.app.vault.delete(pdfFile)
+        // }
 
-        this.app.vault.delete(file)
+        // this.app.vault.delete(file)
 
+
+        // NEW DEBUG/TEST Logic:
+
+        // const x = new ConvertorService()
+        // await x.convertToSvg(file, this.app)
+
+        console.log("DEBUG: Finished conversion to SVG")
     }
-
 }

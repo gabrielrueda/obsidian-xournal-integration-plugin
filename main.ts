@@ -2,11 +2,12 @@ import {SelectNameModal} from "src/modals/select_name_modal";
 import {EditDrawing} from "src/modals/edit_drawing_modal";
 import {CreatePdfDrawing} from "src/modals/create_pdf_drawing_modal";
 import {DeleteDrawing} from "src/modals/delete_drawing_modal";
-import {Plugin, TFile, TFolder} from "obsidian";
+import {Plugin, TFile, TFolder, WorkspaceLeaf} from "obsidian";
 import {XournalIntegrationSettings, XournalIntegrationSettingsTab} from "./settings";
 import {CreateDrawingService} from "./src/services/create_drawing_service";
 import { RenderContentService } from "src/services/render_content_service";
 import { EmbedDrawing } from "src/modals/embed_drawing_modal";
+import { XournalView, VIEW_TYPE } from "src/views/XournalView";
 
 
 export default class XournalIntegrationPlugin extends Plugin {
@@ -18,21 +19,39 @@ export default class XournalIntegrationPlugin extends Plugin {
     async onload() {
         console.log('Loading plugin: Xournal Integration Plugin');
 
-        this.settings = Object.assign(new XournalIntegrationSettings(), await this.loadData());
-        this.addSettingTab(new XournalIntegrationSettingsTab(this.app, this));
-        this.createDrawingService = new CreateDrawingService(this.app, this);
-        this.renderContentService = new RenderContentService(this.app);
+        // this.settings = Object.assign(new XournalIntegrationSettings(), await this.loadData());
+        // this.addSettingTab(new XournalIntegrationSettingsTab(this.app, this));
+        // this.createDrawingService = new CreateDrawingService(this.app, this);
+        // this.renderContentService = new RenderContentService(this.app);
 
-        // Run the render service on all xopp files initally in case updates to the files were made while obsidian was closed
-        const tasks = []
-        for (let file of this.app.vault.getFiles()) {
-            if (file instanceof TFile && file.extension == "xopp") {
-                tasks.push(this.renderContentService.convertToSvg(file))
-            }
-        }
+        // // Run the render service on all xopp files initally in case updates to the files were made while obsidian was closed
+        // const tasks = []
+        // for (let file of this.app.vault.getFiles()) {
+        //     if (file instanceof TFile && file.extension == "xopp") {
+        //         tasks.push(this.renderContentService.convertToSvg(file))
+        //     }
+        // }
 
-        await Promise.all(tasks)
+        // await Promise.all(tasks)
         console.log("Completed initial rendering of all files")
+
+        this.registerView(
+            VIEW_TYPE,
+            (leaf) => new XournalView(leaf)
+            );
+
+        this.registerExtensions(
+            ["xopp"],
+            VIEW_TYPE
+        );
+
+    this.addRibbonIcon('dice', 'Activate view', () => {
+      this.activateView();
+    });
+
+        console.log("loaded custom view")
+
+
 
         this.addCommand({
             id: "edit-drawing",
@@ -97,12 +116,12 @@ export default class XournalIntegrationPlugin extends Plugin {
 
 
         // Event for allowing file esit:
-        this.registerEvent(
-			this.app.vault.on("modify", async (file) => {
-                if (file instanceof TFile && file.extension == "xopp") {
-                    await this.renderContentService.convertToSvg_debounced(file);                        
-                }
-            }));
+        // this.registerEvent(
+		// 	this.app.vault.on("modify", async (file) => {
+        //         if (file instanceof TFile && file.extension == "xopp") {
+        //             await this.renderContentService.convertToSvg_debounced(file);                        
+        //         }
+        //     }));
 
     
 
@@ -195,4 +214,25 @@ export default class XournalIntegrationPlugin extends Plugin {
     onunload() {
         console.log('Unloading plugin: Xournal Integration Plugin');
     }
+
+
+  async activateView() {
+    const { workspace } = this.app;
+
+    let leaf: WorkspaceLeaf | null = null;
+    const leaves = workspace.getLeavesOfType(VIEW_TYPE);
+
+    if (leaves.length > 0) {
+      // A leaf with our view already exists, use that
+      leaf = leaves[0];
+    } else {
+      // Our view could not be found in the workspace, create a new leaf
+      // in the main area for it
+      leaf = workspace.getLeaf(false)
+      await leaf?.setViewState({ type: VIEW_TYPE, active: true });
+    }
+
+    // "Reveal" the leaf in case it is in a collapsed sidebar
+    workspace.revealLeaf(leaf);
+  }
 }
