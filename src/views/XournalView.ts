@@ -6,8 +6,11 @@ const { performance } = require('perf_hooks');
 export const VIEW_TYPE = 'xournal-view';
 
 export class XournalView extends FileView {
-  constructor(leaf: WorkspaceLeaf) {
+  private parser: XournalParserService;
+
+  constructor(leaf: WorkspaceLeaf, parser: XournalParserService) {
     super(leaf);
+    this.parser = parser;
   }
 
   getViewType() {
@@ -29,12 +32,10 @@ export class XournalView extends FileView {
       const container = this.contentEl;
       container.empty();
 
-      const parser = new XournalParserService(this.app);
-
       // await parseXournalXML3(file, this.app, drawing)
 
       const starttime = performance.now()
-      const drawing = await parser.renderDrawing(file, container)
+      const drawing = await this.parser.renderDrawing(file, container)
       const endtime = performance.now()
 
       console.log(`Time to read all ${endtime - starttime}ms`)

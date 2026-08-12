@@ -2,15 +2,11 @@ import { ungzip } from "node-gzip"
 import { App, TFile } from "obsidian"
 import { SAXParser } from "sax-ts"
 import XournalDrawing from "src/types/XournalDrawing"
-import XournalImage from "src/types/XournalImage"
-import XournalLine from "src/types/XournalLine"
 import XournalPage from "src/types/XournalPage"
-import XournalText from "src/types/XournalText"
 import { XournalPageItemFactory } from "./XournalPageItemFactory"
-const { performance } = require('perf_hooks');
 
 
-const CACHE_SIZE = 5;
+const CACHE_SIZE = 1;
 
 interface Node { 
     name: string | null; 
@@ -26,11 +22,38 @@ export default class XournalParserService {
         this.app = app;
     }
 
+    private updateCache(drawing: XournalDrawing) {
+        this.cache.push(drawing)
+        if (this.cache.length > CACHE_SIZE) {
+            this.cache.shift()
+        }
+    }
+
+
+    private findInCache(file: TFile): XournalDrawing | null {
+        for (const drawing of this.cache) {
+            if (drawing.id === file.path) {
+                return drawing
+            }
+        }
+        return null
+    }
+
     public async renderDrawing(file: TFile, container: HTMLElement) {
-        const drawing = new XournalDrawing(container);
-        // TODO: remove the await call when finished with this
-        await this.parseXournalXML(file, drawing)
-        return drawing
+
+        let drawing = this.findInCache(file);
+
+        if (drawing) {
+            await drawing.parseDrawingNewContainer(container)
+        } else {
+            drawing = new XournalDrawing(container, file.path);
+            // TODO: remove the await call when finished with this
+            await this.parseXournalXML(file, drawing)
+    
+            this.updateCache(drawing)
+        }
+
+        return drawing        
     }
 
     private async unzipContent(file: TFile): Promise<string> {
@@ -53,6 +76,10 @@ export default class XournalParserService {
 
             if (node.name === "page") {
                 currentPage = new XournalPage(currentAttrs)
+            }
+
+            if(node.name === "background" && currentPage) {
+                XournalPageItemFactory.create(node.name, currentAttrs, textBuffer, currentPage)
             }
         }
 

@@ -1,3 +1,4 @@
+import XournalBackground from "src/types/XournalBackground";
 import XournalImage from "src/types/XournalImage";
 import XournalLine from "src/types/XournalLine";
 import XournalPage from "src/types/XournalPage";
@@ -14,7 +15,8 @@ export class XournalPageItemFactory {
     private static readonly registry: Record<string, pageItemConstructor> = {
         text: XournalText,
         image: XournalImage,
-        stroke: XournalLine
+        stroke: XournalLine,
+        background: XournalBackground
     }
 
     static create(tagName: string, attrs: Record<string, any> | null, value: string[], page: XournalPage): XournalPageItem | null{

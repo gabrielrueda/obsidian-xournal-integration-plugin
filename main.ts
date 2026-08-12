@@ -8,19 +8,21 @@ import {CreateDrawingService} from "./src/services/create_drawing_service";
 import { RenderContentService } from "src/services/render_content_service";
 import { EmbedDrawing } from "src/modals/embed_drawing_modal";
 import { XournalView, VIEW_TYPE } from "src/views/XournalView";
+import XournalParserService from "src/services/XournalParserService";
 
 
 export default class XournalIntegrationPlugin extends Plugin {
     settings: XournalIntegrationSettings;
     createDrawingService: CreateDrawingService
     renderContentService: RenderContentService
-
+    parser: XournalParserService;
 
     async onload() {
         console.log('Loading plugin: Xournal Integration Plugin');
 
-        // this.settings = Object.assign(new XournalIntegrationSettings(), await this.loadData());
-        // this.addSettingTab(new XournalIntegrationSettingsTab(this.app, this));
+        this.parser = new XournalParserService(this.app);
+        this.settings = Object.assign(new XournalIntegrationSettings(), await this.loadData());
+        this.addSettingTab(new XournalIntegrationSettingsTab(this.app, this));
         // this.createDrawingService = new CreateDrawingService(this.app, this);
         // this.renderContentService = new RenderContentService(this.app);
 
@@ -37,7 +39,7 @@ export default class XournalIntegrationPlugin extends Plugin {
 
         this.registerView(
             VIEW_TYPE,
-            (leaf) => new XournalView(leaf)
+            (leaf) => new XournalView(leaf, this.parser)
             );
 
         this.registerExtensions(

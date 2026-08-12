@@ -1,6 +1,3 @@
-import { App, TFile } from "obsidian";
-import XournalMetadataItem from "./XournalMetadataItem";
-import { extractRawData, extractTags } from "src/utils/XoppFileParserUtils";
 import XournalPageItem from "./XournalPageItem";
 import XournalPage from "./XournalPage";
 
@@ -23,9 +20,6 @@ export default class XournalLine extends XournalPageItem {
     private width: number;
     private capStyle: string;
 
-    print(): void {
-        console.log("This is a line")
-    }
 
     constructor(attr: Record<string, any>, value: string[], page: XournalPage) {
         super(attr, value, page)
@@ -37,7 +31,7 @@ export default class XournalLine extends XournalPageItem {
         const widths = String(attr["width"])
         
         if((typeof widths) == "number") {
-            this.width = widths
+            this.width = parseFloat(widths)
         } else {
             // this.width = widths.split(" ").map(parseFloat).reduce(this.averageWidth)
             this.width = parseFloat(widths.split(" ")[0])
@@ -49,55 +43,7 @@ export default class XournalLine extends XournalPageItem {
         // this.parsePoints(value)
     }
 
-    // //deserialize: (text: string) => void
-    // public deserialize(text: string): void{
-    //     this.points = this.parsePoints(extractRawData(text));
-
-    //     const tags = extractTags(text, REQUIRED_TAGS);
-
-    //     this.color = tags.get("color")
-
-    //     const widths = tags.get("width")
-        
-    //     if((typeof widths) == "number") {
-    //         this.width = widths
-    //     } else {
-    //         // this.width = widths.split(" ").map(parseFloat).reduce(this.averageWidth)
-    //         this.width = parseFloat(widths.split(" ")[0])
-    //     }
-        
-    //     const capStyle = tags.get("capStyle")
-
-    //     if(!capStyle) {
-    //         this.capStyle = "round"
-    //     } else {
-    //         this.capStyle = capStyle
-    //     }
-
-    //     // next step: explore algorithms like spline interpolation, line simplification algorithms (incl. Ramer–Douglas–Peucker algorithm)
-    // }
-
-
-    // public serializeToCanvas(ind: number): string {
-
-    //     const res = [];
-
-    //     res.push(`ctx${ind}.beginPath();`)
-
-    //     res.push(`ctx${ind}.lineWidth = ${this.width};\nctx${ind}.strokeStyle = '${this.color}';\nctx${ind}.lineCap = '${this.capStyle}';`)
-        
-    //     res.push(`ctx${ind}.moveTo(${this.points[0].x}, ${this.points[0].y});`)
-
-    //     for (let i = 1; i < this.points.length; i++){
-    //         res.push(`ctx${ind}.lineTo(${this.points[i].x}, ${this.points[i].y});`)
-    //     }
-
-    //     res.push(`ctx${ind}.stroke();`)
-    
-
-    //     return res.join("\n");
-    // }
-
+ 
     public async serializeToCanvas(): Promise<void> {
         const ctx = this.page.getCtx()
 
